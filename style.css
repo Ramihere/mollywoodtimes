@@ -16,3 +16,12 @@
 
 .builder-chip.builder-slot{min-width:44px;min-height:46px;background:#171326;border:1px dashed #a18ac7;color:#a18ac7;font-size:1.5rem;cursor:copy}
 .answer-builder .builder-chip.drag-over{border-color:var(--mint);background:#1b2630;color:var(--mint);transform:scale(1.06)}
+
+.drawing-tools{margin-top:22px;border:1px solid #66527c;background:#211b34;border-radius:16px;padding:18px}
+.drawing-canvas{display:block;width:100%;height:220px;background:#fff;border:2px solid #66527c;border-radius:12px;touch-action:none;cursor:crosshair}
+.answer-canvas{height:250px}
+.canvas-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:10px}
+.ocr-status{font-size:.78rem;color:var(--orange);line-height:1.7;min-height:1.4em}
+.letter-slot{cursor:pointer}
+.letter-slot.selected-slot{outline:2px solid var(--mint);outline-offset:4px;border-radius:4px}
+@media(max-width:760px){.drawing-tools,.creator-tools{padding:13px}.drawing-canvas{height:200px}.answer-canvas{height:220px}}
