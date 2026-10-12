@@ -155,6 +155,8 @@
     const placements=roomData.placements||{};
     // The full answer is never rendered to non-host clients.
     const shown=Array.from(puzzle.mask||"");
+    if(selectedGuessIndex!==null && shown[selectedGuessIndex]!=="_") selectedGuessIndex=null;
+    if(selectedGuessIndex===null) selectedGuessIndex=shown.findIndex((ch,i)=>ch==="_" && !(placements[i]||""));
     const slots=$("wordSlots"); slots.innerHTML="";
     for(let index=0;index<shown.length;index++){
       const ch=shown[index], span=document.createElement("span"), slotIndex=index;
@@ -175,8 +177,6 @@
       }
       slots.appendChild(span);
     }
-    if(selectedGuessIndex!==null && shown[selectedGuessIndex]!=="_") selectedGuessIndex=null;
-    if(selectedGuessIndex===null) selectedGuessIndex=shown.findIndex((ch,i)=>ch==="_" && !(placements[i]||""));
     $("selectedSlotLabel").textContent=selectedGuessIndex===null?"ഡാഷ് തിരഞ്ഞെടുക്കുക":`സ്ഥാനം ${selectedGuessIndex+1}`;
     if(roomData.finished) say("gameMessage",roomData.winner===null?"റൗണ്ട് അവസാനിച്ചു.":`ടീം ${roomData.winner===0?"A":"B"} ഈ റൗണ്ട് നേടി!`);
     else if(isMyTurnToGuess()) say("gameMessage","ഒരു ഒഴിഞ്ഞ ഡാഷ് തിരഞ്ഞെടുക്കുക; അതിനുള്ള അക്ഷരം വരച്ച് തിരിച്ചറിയൂ.");
@@ -250,7 +250,7 @@
     if(!answer||!/[\u0D00-\u0D7F]/u.test(answer)){toast("സിനിമയുടെ പേര് വരച്ച് തിരിച്ചറിഞ്ഞ് ഉറപ്പാക്കൂ.");return;}
     if(graphemes(answer).filter(c=>! /\s/u.test(c)).length>50){toast("ചെറിയ സിനിമയുടെ പേര് പരീക്ഷിക്കൂ.");return;}
     const creatorTeam=myPlayer()?.team??0;
-    localHostAnswer=answer;
+    localHostAnswer=answer;selectedGuessIndex=null;
     const puzzle={creatorTeam,mask:Array.from(answer).map(c=>/\s/u.test(c)||isMalayalamSign(c)||/[.,!?'"():\\-]/u.test(c)?c:"_").join(""),hint:hint||""};
     if(localMode){localState.puzzle=puzzle;localState.guesses={};localState.placements={};localState.wrong=0;localState.finished=false;localState.winner=null;roomData=localState;renderGame();}
     else {
@@ -354,7 +354,7 @@
   function initSlotCanvas(canvas){
     const ctx=canvas.getContext("2d");ctx.fillStyle="#fff";ctx.fillRect(0,0,canvas.width,canvas.height);
     let drawing=false,last=null;
-    canvas.addEventListener("pointerdown",e=>{e.preventDefault();e.stopPropagation();selectedGuessIndex=Number(canvas.dataset.index);canvas.setPointerCapture(e.pointerId);drawing=true;const r=canvas.getBoundingClientRect();last={x:(e.clientX-r.left)*canvas.width/r.width,y:(e.clientY-r.top)*canvas.height/r.height};ctx.beginPath();ctx.arc(last.x,last.y,3,0,Math.PI*2);ctx.fillStyle="#20172d";ctx.fill();});
+    canvas.addEventListener("pointerdown",e=>{e.preventDefault();e.stopPropagation();selectedGuessIndex=Number(canvas.dataset.index);$("selectedSlotLabel").textContent=`സ്ഥാനം ${selectedGuessIndex+1}`;canvas.setPointerCapture(e.pointerId);drawing=true;const r=canvas.getBoundingClientRect();last={x:(e.clientX-r.left)*canvas.width/r.width,y:(e.clientY-r.top)*canvas.height/r.height};ctx.beginPath();ctx.arc(last.x,last.y,3,0,Math.PI*2);ctx.fillStyle="#20172d";ctx.fill();});
     canvas.addEventListener("pointermove",e=>{if(!drawing)return;e.preventDefault();e.stopPropagation();const r=canvas.getBoundingClientRect(),p={x:(e.clientX-r.left)*canvas.width/r.width,y:(e.clientY-r.top)*canvas.height/r.height};ctx.beginPath();ctx.moveTo(last.x,last.y);ctx.lineTo(p.x,p.y);ctx.strokeStyle="#20172d";ctx.lineWidth=6;ctx.lineCap="round";ctx.lineJoin="round";ctx.stroke();last=p;});
     const stop=()=>{drawing=false;last=null;};canvas.addEventListener("pointerup",stop);canvas.addEventListener("pointercancel",stop);
   }
