@@ -69,8 +69,16 @@
         <div id="alphabetTray" class="alphabet-tray"></div>
       </div>
       <div id="creatorTools" class="creator-tools hidden">
-        <label for="movieAnswer">സിനിമയുടെ പേര് (മലയാളത്തിൽ)</label>
-        <input id="movieAnswer" maxlength="50" placeholder="ഉദാ. പ്രേമം">
+        <h3 class="builder-title">ടീം A: അക്ഷരങ്ങൾ ചേർത്ത് സിനിമയുടെ പേര് ഉണ്ടാക്കൂ</h3>
+        <p class="builder-help">മലയാളം അക്ഷരമോ ചിഹ്നമോ ക്ലിക്ക് ചെയ്യൂ, അല്ലെങ്കിൽ ബോർഡിലേക്ക് വലിച്ചിടൂ. മലയാളം കീബോർഡ് ആവശ്യമില്ല.</p>
+        <div id="answerBuilder" class="answer-builder" aria-label="സിനിമയുടെ പേര് തയ്യാറാക്കുന്ന സ്ഥലം"><span class="builder-placeholder">അക്ഷരങ്ങൾ ഇവിടെ ചേർക്കൂ…</span></div>
+        <div class="builder-controls">
+          <button id="addWordSpace" class="secondary-btn" type="button">വാക്കിനിടയിൽ ഇടം</button>
+          <button id="undoAnswer" class="secondary-btn" type="button">അവസാന അക്ഷരം നീക്കുക</button>
+          <button id="clearAnswer" class="text-btn" type="button">മായ്ക്കുക</button>
+        </div>
+        <label>മലയാളം അക്ഷരങ്ങളും ചിഹ്നങ്ങളും — ക്ലിക്ക് ചെയ്യൂ അല്ലെങ്കിൽ വലിച്ചിടൂ</label>
+        <div id="creatorAlphabetTray" class="alphabet-tray creator-alphabet-tray"></div>
         <label for="movieHint">സൂചന (ഐച്ഛികം)</label>
         <input id="movieHint" maxlength="100" placeholder="ഉദാ. ഒരു പ്രണയകഥ">
         <button id="submitPuzzle" class="primary-btn">ചോദ്യം തയ്യാറാക്കൂ →</button>
