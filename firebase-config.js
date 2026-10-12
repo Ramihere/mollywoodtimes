@@ -1,18 +1,18 @@
 /*
   Firebase setup:
-  1. Create a Firebase project and add a Web App.
-  2. Copy the web app config values into the object below.
-  3. Enable Authentication > Sign-in method > Anonymous.
-  4. Create Realtime Database and apply the rules from database.rules.json.
-  Leave configured:false to use local demo mode.
+  Anonymous Authentication and Realtime Database are configured in Firebase.
+  The web API key and app ID identify this public web app; database access is controlled by Realtime Database rules.
 */
 window.FIREBASE_GAME_CONFIG = {
-  configured: false,
+  configured: true,
   config: {
-    apiKey: "PASTE_YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT.firebaseapp.com",
-    databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
-    projectId: "YOUR_PROJECT",
-    appId: "PASTE_YOUR_APP_ID"
+    apiKey: "AIzaSyCWrsPhvAiZQVmSE-FHapKDTQaQt-i2LF4",
+    authDomain: "mollywood-times.firebaseapp.com",
+    databaseURL: "https://mollywood-times-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "mollywood-times",
+    storageBucket: "mollywood-times.firebasestorage.app",
+    messagingSenderId: "533170680427",
+    appId: "1:533170680427:web:75ddbc78598125785ab72e",
+    measurementId: "G-H4ZY0B5MP8"
   }
 };
