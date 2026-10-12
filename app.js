@@ -164,10 +164,8 @@
       else if(isMalayalamSign(ch)){span.className="letter-slot punctuation";span.textContent=ch;}
       else {
         const revealed=ch!=="_", placed=placements[index]||"";
-        let visibleText=revealed?ch:placed;
-        while(index+1<shown.length && isMalayalamSign(shown[index+1])) visibleText+=shown[++index];
         span.className="letter-slot"+(revealed?" revealed":placed?" placed":"");
-        span.textContent=visibleText;
+        span.textContent=revealed?ch:placed;
         if (!revealed && isMyTurnToGuess() && !roomData.finished) {
           span.ondragover=e=>{e.preventDefault();span.classList.add("drag-over");};
           span.ondragleave=()=>span.classList.remove("drag-over");
