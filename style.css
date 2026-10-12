@@ -56,3 +56,6 @@
 .slot-draw-canvas{position:relative;z-index:1}
 @media(max-width:900px){.game-columns{grid-template-columns:minmax(0,1fr) 260px;gap:12px}}
 @media(max-width:700px){.game-columns{grid-template-columns:1fr}.chat-panel{position:static;min-height:280px;max-height:400px}.chat-messages{min-height:170px}}
+
+.retry-drawing{position:absolute;z-index:3;top:-10px;right:-10px;border:0;border-radius:50%;width:24px;height:24px;background:#eab308;color:#211b34;font-weight:900;cursor:pointer;box-shadow:0 1px 5px #0008}
+.chat-message{max-width:94%}
