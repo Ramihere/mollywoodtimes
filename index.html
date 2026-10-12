@@ -20,7 +20,7 @@
       <div class="hero">
         <span class="eyebrow">🎬 സിനിമ അറിയാമോ?</span>
         <h1>അക്ഷരങ്ങൾ ചേർക്കൂ.<br><span>സിനിമ കണ്ടെത്തൂ!</span></h1>
-        <p>പാഡിൽ മലയാളം അക്ഷരങ്ങൾ വരച്ച് സിനിമയുടെ പേര് കണ്ടെത്തൂ. അഞ്ച് തെറ്റുകൾ മാത്രം!</p>
+        <p>മലയാളം അക്ഷരങ്ങൾ വരയ്ക്കൂ, ടീമിനോട് സംസാരിക്കൂ, സിനിമ കണ്ടെത്തൂ!</p>
         <div class="hero-badges"><span>👥 1 vs 1</span><span>🤝 2 vs 2</span><span>🔤 മലയാളത്തിൽ മാത്രം</span></div>
       </div>
       <div class="lobby-card">
@@ -58,6 +58,7 @@
         <div class="score-divider">VS</div>
         <div class="team-score" id="team1Card"><span class="team-dot team-b"></span><div><small>ടീം B</small><b id="score1">0</b></div><span id="team1Names" class="team-names">കളിക്കാർ</span></div>
       </div>
+      <div class="game-columns"><div class="game-main">
       <div id="turnBanner" class="turn-banner">ടേൺ വിവരങ്ങൾ ഇവിടെ കാണാം</div>
       <div class="movie-board">
         <div class="board-label"><span>🎞️ സിനിമയുടെ പേര്</span><span id="mistakesLabel">തെറ്റുകൾ <b>0</b>/5</span></div>
@@ -66,31 +67,38 @@
       </div>
       <div id="guessDrawingTools" class="drawing-tools hidden">
         <div class="alphabet-head"><div><h3>നിങ്ങളുടെ ഊഹം വരയ്ക്കൂ</h3><p>ഒരു ഒഴിഞ്ഞ ഡാഷ് തിരഞ്ഞെടുക്കുക, അതിൽ വരുന്ന മലയാളം അക്ഷരം പാഡിൽ വരയ്ക്കുക.</p></div><span id="selectedSlotLabel" class="count-pill">സ്ഥാനം തിരഞ്ഞെടുക്കുക</span></div>
-        <div class="canvas-actions"><button id="recognizeGuess" class="primary-btn" type="button">തിരഞ്ഞെടുത്ത ഡാഷിലെ എഴുത്ത് പരിശോധിക്കൂ →</button><button id="clearGuessCanvas" class="secondary-btn" type="button">തിരഞ്ഞെടുത്ത ഡാഷ് മായ്ക്കുക</button></div>
-        <p id="guessOcrStatus" class="ocr-status" role="status">ഒരു അക്ഷരം വ്യക്തമായി വരയ്ക്കുക.</p>
+        <div class="canvas-actions"><button id="sendDrawing" class="primary-btn" type="button">വരച്ച അക്ഷരം അയയ്ക്കുക →</button><button id="clearGuessCanvas" class="secondary-btn" type="button">തിരഞ്ഞെടുത്ത ഡാഷ് മായ്ക്കുക</button></div>
+        <p id="guessDrawingStatus" class="ocr-status" role="status">ഒരു ഡാഷിൽ മലയാളം അക്ഷരം വരച്ച് അയയ്ക്കൂ.</p>
       </div>
       <div id="creatorTools" class="creator-tools hidden">
-        <h3 class="builder-title">ടീം A — സിനിമയുടെ പേര് വരയ്ക്കുക</h3>
-        <p class="builder-help">ക്യാൻവാസിൽ മലയാളം സിനിമയുടെ പേര് കൈകൊണ്ട് എഴുതുക. “എഴുത്ത് തിരിച്ചറിയുക” അമർത്തുമ്പോൾ പരീക്ഷണാത്മക OCR അത് തിരിച്ചറിയാൻ ശ്രമിക്കും.</p>
-        <canvas id="answerCanvas" class="drawing-canvas answer-canvas" aria-label="സിനിമയുടെ പേര് വരയ്ക്കാനുള്ള പാഡ്"></canvas>
-        <div class="canvas-actions"><button id="recognizeAnswer" class="secondary-btn" type="button">✦ എഴുത്ത് തിരിച്ചറിയുക</button><button id="clearAnswerCanvas" class="text-btn" type="button">മായ്ക്കുക</button></div>
-        <p id="answerOcrStatus" class="ocr-status" role="status">മലയാളം എഴുത്ത് ഇവിടെ തിരിച്ചറിയാൻ ശ്രമിക്കും.</p>
-        <label for="movieAnswer">തിരിച്ചറിഞ്ഞ സിനിമയുടെ പേര് (ആവശ്യമെങ്കിൽ തിരുത്തുക)</label>
-        <input id="movieAnswer" maxlength="100" placeholder="തിരിച്ചറിഞ്ഞ പേര് ഇവിടെ വരും">
+        <h3 class="builder-title">ചോദ്യം തയ്യാറാക്കുന്ന ടീം — സിനിമയുടെ പേര് നൽകുക</h3>
+        <p class="builder-help">സിനിമയുടെ പേര് ഇവിടെ നൽകൂ. പേര് മറച്ചുവെച്ച് ഡാഷുകൾ സൃഷ്ടിക്കും. മറു ടീം ഓരോ ഡാഷിലും അക്ഷരം വരയ്ക്കും; നിങ്ങൾ അത് ശരിയാണോ എന്ന് പരിശോധിക്കാം.</p>
+        <label for="movieAnswer">സിനിമയുടെ പേര് (മലയാളത്തിൽ)</label>
+        <input id="movieAnswer" maxlength="100" placeholder="ഉദാ. മലയാളം സിനിമയുടെ പേര്">
         <label for="movieHint">സൂചന (ഐച്ഛികം)</label><input id="movieHint" maxlength="100" placeholder="ഉദാ. ഒരു പ്രണയകഥ">
-        <p class="small-note">മറു ടീമിന് സിനിമയുടെ പേര് കാണിക്കില്ല. അക്ഷരങ്ങളും ചിഹ്നങ്ങളും മാത്രമുള്ള സൂചന ഗെയിം സൃഷ്ടിക്കും.</p>
+        <p class="small-note">ഉത്തരം മറു ടീമിന് കാണിക്കില്ല. വരച്ച അക്ഷരം ശരിയെങ്കിൽ പച്ച ✓, തെറ്റെങ്കിൽ ചുവപ്പ് ✕ അമർത്തുക.</p>
         <button id="submitPuzzle" class="primary-btn">ചോദ്യം തയ്യാറാക്കൂ →</button>
       </div>
       <div id="gameMessage" class="message" role="status"></div>
       <div class="game-actions"><button id="hintBtn" class="secondary-btn">💡 സൂചന</button><button id="nextRound" class="primary-btn hidden">അടുത്ത റൗണ്ട് →</button><button id="backToLobby" class="text-btn">മുറി വിടുക</button></div>
+      </div>
+      <aside id="chatPanel" class="chat-panel">
+        <div class="chat-heading"><div><h3>ടീം ചാറ്റ്</h3><p>എതിര്‍ ടീമിനോട് സംസാരിക്കൂ</p></div><span class="chat-live">● LIVE</span></div>
+        <div id="chatMessages" class="chat-messages" aria-live="polite"><p class="chat-empty">സന്ദേശങ്ങളൊന്നുമില്ല. ആദ്യം ഒരു സന്ദേശം അയയ്ക്കൂ.</p></div>
+        <form id="chatForm" class="chat-form">
+          <input id="chatInput" maxlength="300" placeholder="സന്ദേശം എഴുതൂ…" autocomplete="off" aria-label="ചാറ്റ് സന്ദേശം">
+          <button class="primary-btn" type="submit">അയയ്ക്കുക</button>
+        </form>
+      </aside>
+      </div>
     </section>
   </main>
 
   <div id="toast" class="toast" role="status"></div>
   <dialog id="helpDialog">
     <div class="dialog-head"><h2>കളിക്കുന്ന വിധം</h2><button id="closeHelp" class="icon-btn">×</button></div>
-    <ol><li>ചോദിക്കുന്ന ടീം പാഡിൽ മലയാളം സിനിമയുടെ പേര് വരയ്ക്കുന്നു; OCR അത് തിരിച്ചറിയാൻ ശ്രമിക്കും.</li><li>മറു ടീം ഓരോ ഒഴിഞ്ഞ ഡാഷിനും മലയാളം അക്ഷരം വരച്ച് ഊഹിക്കുന്നു.</li><li>ശരിയായ അക്ഷരം സിനിമയുടെ പേരിൽ തുറക്കും.</li><li>അഞ്ച് തെറ്റായ ശ്രമങ്ങൾ കഴിഞ്ഞാൽ റൗണ്ട് അവസാനിക്കും.</li><li>ഓൺലൈൻ കളിക്ക് Firebase ക്രമീകരിച്ച് GitHub Pages-ൽ പ്രസിദ്ധീകരിക്കണം.</li></ol>
-    <p class="small-note">ശ്രദ്ധിക്കുക: മലയാളം കൈയെഴുത്ത് OCR പരീക്ഷണാത്മകമാണ്; കൂട്ടക്ഷരങ്ങൾ, ചിഹ്നങ്ങൾ, മോശം കൈയെഴുത്ത് എന്നിവ തെറ്റായി തിരിച്ചറിയാം. ആവശ്യമെങ്കിൽ തിരിച്ചറിഞ്ഞ സിനിമയുടെ പേര് തിരുത്തുക.</p>
+    <ol><li>ചോദ്യം തയ്യാറാക്കുന്ന ടീം സിനിമയുടെ പേര് നൽകുന്നു; അത് മറച്ചുവെക്കും.</li><li>മറ്റേ ടീം ഓരോ ഒഴിഞ്ഞ സ്ഥാനത്തും അക്ഷരം വരച്ച് അയക്കും.</li><li>ചോദ്യം തയ്യാറാക്കിയ ടീം പച്ച ✓ അമർത്തി ശരിയാണെന്നും ചുവപ്പ് ✕ അമർത്തി തെറ്റാണെന്നും അറിയിക്കും. ചാറ്റും ഉപയോഗിക്കാം.</li><li>അഞ്ച് തെറ്റായ ശ്രമങ്ങൾ കഴിഞ്ഞാൽ റൗണ്ട് അവസാനിക്കും.</li><li>ഓൺലൈൻ കളിക്ക് Firebase ക്രമീകരിച്ച് GitHub Pages-ൽ പ്രസിദ്ധീകരിക്കണം.</li></ol>
+    <p class="small-note">അക്ഷരങ്ങൾ സ്വയം തിരിച്ചറിയില്ല; ചോദ്യം തയ്യാറാക്കിയ ടീം ഓരോ വരച്ച അക്ഷരവും പരിശോധിക്കും.</p>
   </dialog>
   <footer>മലയാള സിനിമാപ്രേമികൾക്കായി ❤️ | സിനിമക്കളി</footer>
 
@@ -98,8 +106,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-  <script src="firebase-config.js"></script>
+    <script src="firebase-config.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
