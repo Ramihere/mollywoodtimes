@@ -60,6 +60,7 @@
       </div>
       <div class="game-columns"><div class="game-main">
       <div id="turnBanner" class="turn-banner">ടേൺ വിവരങ്ങൾ ഇവിടെ കാണാം</div>
+      <div id="clueDrawingView" class="clue-drawing-view hidden"><div class="board-label">ടീം A വരച്ച സൂചന</div><img id="clueDrawingImage" alt="ടീം വരച്ച സിനിമാ സൂചന"></div>
       <div class="movie-board">
         <div class="board-label"><span>🎞️ സിനിമയുടെ പേര്</span><span id="mistakesLabel">തെറ്റുകൾ <b>0</b>/5</span></div>
         <div id="wordSlots" class="word-slots" aria-label="സിനിമയുടെ പേരിലെ അക്ഷരങ്ങൾ"></div>
@@ -72,7 +73,9 @@
       </div>
       <div id="creatorTools" class="creator-tools hidden">
         <h3 class="builder-title">ചോദ്യം തയ്യാറാക്കുന്ന ടീം — സിനിമയുടെ പേര് നൽകുക</h3>
-        <p class="builder-help">സിനിമയുടെ പേര് ഇവിടെ നൽകൂ. പേര് മറച്ചുവെച്ച് ഡാഷുകൾ സൃഷ്ടിക്കും. മറു ടീം ഓരോ ഡാഷിലും അക്ഷരം വരയ്ക്കും; നിങ്ങൾ അത് ശരിയാണോ എന്ന് പരിശോധിക്കാം.</p>
+        <p class="builder-help">വലിയ പാഡിൽ ഡാഷുകളും ചിഹ്നങ്ങളും വരച്ച് ടീമിന് സൂചന നൽകൂ. ശരിയായ അക്ഷരങ്ങൾ പരിശോധിക്കാൻ സിനിമയുടെ യഥാർത്ഥ പേര് താഴെ നൽകുക; അത് മറു ടീമിന് കാണിക്കില്ല.</p>
+        <canvas id="clueCanvas" class="drawing-canvas clue-canvas" width="900" height="240" aria-label="സിനിമയുടെ സൂചന വരയ്ക്കാനുള്ള പാഡ്"></canvas>
+        <div class="canvas-actions"><button id="clearClueCanvas" class="secondary-btn" type="button">പാഡ് മായ്ക്കുക</button></div>
         <label for="movieAnswer">സിനിമയുടെ പേര് (മലയാളത്തിൽ)</label>
         <input id="movieAnswer" maxlength="100" placeholder="ഉദാ. മലയാളം സിനിമയുടെ പേര്">
         <label for="movieHint">സൂചന (ഐച്ഛികം)</label><input id="movieHint" maxlength="100" placeholder="ഉദാ. ഒരു പ്രണയകഥ">
