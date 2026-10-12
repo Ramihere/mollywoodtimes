@@ -7,7 +7,7 @@
   const $lobby = $("lobby"), $waiting = $("waiting"), $game = $("game");
   let selectedMode = "1v1", localMode = true, db = null, auth = null, uid = "local-"+Math.random().toString(36).slice(2);
   let roomCode = "", roomRef = null, roomData = null, unsubscribe = null, myName = "", toastTimer = null;
-  let localPlayers = [], localState = null, isHost = false, localHostAnswer = "";
+  let localPlayers = [], localState = null, isHost = false, localHostAnswer = "", draftAnswer = "";
   const normalize = s => (s || "").normalize("NFC").replace(/\s+/g," ").trim();
   const graphemes = s => {
     if (window.Intl && Intl.Segmenter) return [...new Intl.Segmenter("ml",{granularity:"grapheme"}).segment(s)].map(x=>x.segment);
@@ -138,6 +138,7 @@
     $("team0Card").classList.toggle("active",p&&p.team===0); $("team1Card").classList.toggle("active",p&&p.team===1);
     $("roundTitle").textContent=roomData.finished?"റൗണ്ട് അവസാനിച്ചു":`റൗണ്ട് ${roomData.round||1}`;
     $("creatorTools").classList.toggle("hidden",!!puzzle||!isHost);
+    if (!puzzle && isHost) renderCreatorBuilder();
     $("nextRound").classList.toggle("hidden",!roomData.finished||!isHost);
     $("hintBtn").disabled=!puzzle||!puzzle.hint||!isMyTurnToGuess();
     if(!puzzle){
@@ -149,7 +150,7 @@
     const creatorTeam=puzzle.creatorTeam, guessingTeam=1-creatorTeam;
     $("turnBanner").textContent=p?.team===creatorTeam?"നിങ്ങളുടെ ടീമാണ് ചോദ്യം ഒരുക്കിയത്. മറുവശം ഊഹിക്കട്ടെ.":`ടീം ${guessingTeam===0?"A":"B"} ഊഹിക്കുന്നു — അക്ഷരങ്ങൾ തിരഞ്ഞെടുക്കൂ!`;
     $("mistakesLabel").innerHTML=`തെറ്റുകൾ <b>${roomData.wrong||0}</b>/5`;
-    const answer=localMode?localHostAnswer:(isHost?((roomData.secret||{}).answer||""):"");
+    const answer=localHostAnswer;
     const answerChars=graphemes(answer||puzzle.mask||"");
     const guessed=roomData.guesses||{};
     const shown=answerChars.length?answerChars:graphemes(puzzle.mask||"");
@@ -158,12 +159,16 @@
       const span=document.createElement("span");
       if(ch===" "){span.className="letter-slot space";span.textContent="";} 
       else if(/[.,!?'"():\-]/u.test(ch)){span.className="letter-slot punctuation";span.textContent=ch;}
-      else {span.className="letter-slot"+(guessed[ch]?" revealed":"");span.textContent=guessed[ch]?ch:"";}
+      else {
+        const revealed=[...ch].every(part=>guessed[part]);
+        span.className="letter-slot"+(revealed?" revealed":"");
+        span.textContent=revealed?ch:"";
+      }
       slots.appendChild(span);
     });
     const tray=$("alphabetTray");tray.innerHTML="";
     ALPHABET.forEach(ch=>{
-      const b=document.createElement("button");b.type="button";b.className="letter-tile"+(guessed[ch]?" used "+(answerChars.includes(ch)?"correct":"wrong"):"");
+      const b=document.createElement("button");b.type="button";b.className="letter-tile"+(guessed[ch]?" used "+(answer.includes(ch)?"correct":"wrong"):"");
       b.textContent=ch;b.draggable=!guessed[ch]&&isMyTurnToGuess()&&!roomData.finished;
       b.disabled=!!guessed[ch]||!isMyTurnToGuess()||roomData.finished;
       b.setAttribute("aria-label",`അക്ഷരം ${ch}`);
@@ -179,9 +184,50 @@
     else say("gameMessage","മറു ടീമിന്റെ ഊഹത്തിനായി കാത്തിരിക്കുന്നു.");
     $("boardHint").textContent="ശരിയായ അക്ഷരങ്ങൾ തുറക്കും · അഞ്ച് തെറ്റുകൾ കഴിഞ്ഞാൽ റൗണ്ട് തീരും";
   }
+  function renderCreatorBuilder() {
+    const builder=$("answerBuilder"), tray=$("creatorAlphabetTray");
+    if (!builder || !tray) return;
+    builder.innerHTML="";
+    if (!draftAnswer) {
+      const placeholder=document.createElement("span");
+      placeholder.className="builder-placeholder";
+      placeholder.textContent="അക്ഷരങ്ങൾ ഇവിടെ ചേർക്കൂ…";
+      builder.appendChild(placeholder);
+    } else {
+      graphemes(draftAnswer).forEach(ch=>{
+        const chip=document.createElement("span");
+        chip.className="builder-chip";
+        chip.textContent=ch===" "?"␠":ch;
+        builder.appendChild(chip);
+      });
+    }
+    tray.innerHTML="";
+    ALPHABET.forEach(ch=>{
+      const b=document.createElement("button");
+      b.type="button"; b.className="letter-tile"; b.textContent=ch;
+      b.draggable=true; b.setAttribute("aria-label",`അക്ഷരം ${ch} ചേർക്കുക`);
+      b.addEventListener("click",()=>addAnswerCharacter(ch));
+      b.addEventListener("dragstart",e=>{e.dataTransfer.setData("text/plain",ch);e.dataTransfer.effectAllowed="copy";});
+      tray.appendChild(b);
+    });
+    builder.ondragover=e=>{e.preventDefault();builder.classList.add("drag-over");};
+    builder.ondragleave=()=>builder.classList.remove("drag-over");
+    builder.ondrop=e=>{e.preventDefault();builder.classList.remove("drag-over");const ch=e.dataTransfer.getData("text/plain");if(ch)addAnswerCharacter(ch);};
+  }
+  function addAnswerCharacter(ch) {
+    if (!ch || graphemes(draftAnswer).length>=50) { toast("സിനിമയുടെ പേര് കുറച്ച് ചുരുക്കൂ."); return; }
+    draftAnswer += ch;
+    renderCreatorBuilder();
+  }
+  function undoAnswerCharacter() {
+    const parts=graphemes(draftAnswer);
+    parts.pop();
+    draftAnswer=parts.join("");
+    renderCreatorBuilder();
+  }
   async function submitPuzzle() {
     if(!isHost||!roomData)return;
-    const answer=normalize($("movieAnswer").value), hint=normalize($("movieHint").value);
+    const answer=normalize(draftAnswer), hint=normalize($("movieHint").value);
     if(!answer||!/[ഀ-ൿ]/u.test(answer)){toast("സിനിമയുടെ പേര് മലയാളത്തിൽ നൽകൂ.");return;}
     if(graphemes(answer).filter(c=>!/\s/u.test(c)).length>50){toast("ചെറിയ സിനിമയുടെ പേര് പരീക്ഷിക്കൂ.");return;}
     const creatorTeam=myPlayer()?.team??0;
@@ -192,7 +238,7 @@
       await roomRef.update({puzzle,guesses:{},wrong:0,finished:false,winner:null});
       await db.ref("roomSecrets/"+roomCode).set({answer,hint});
     }
-    $("movieAnswer").value="";$("movieHint").value="";
+    draftAnswer=""; $("movieHint").value=""; renderCreatorBuilder();
   }
   async function guessLetter(ch) {
     if(!isMyTurnToGuess()||roomData.finished||!roomData.puzzle)return;
@@ -210,14 +256,14 @@
     const guessed=roomData.guesses||{};if(guessed[ch])return;
     const answer=localHostAnswer;
     if(!answer){toast("ഹോസ്റ്റിന്റെ ബ്രൗസറിൽ ഉത്തരം ലഭ്യമല്ല. ചോദ്യം വീണ്ടും തയ്യാറാക്കൂ.");return;}
-    const correct=graphemes(answer).includes(ch), nextGuesses={...guessed,[ch]:true};
+    const correct=answer.includes(ch), nextGuesses={...guessed,[ch]:true};
     const wrong=(roomData.wrong||0)+(correct?0:1);
-    const won=graphemes(answer).every(c=>/\\s/u.test(c)||/[.,!?'"():\\-]/u.test(c)||nextGuesses[c]);
+    const won=[...answer].every(c=>/\\s/u.test(c)||/[.,!?'"():\\-]/u.test(c)||nextGuesses[c]);
     const finished=won||wrong>=5;
     const winner=won?(1-roomData.puzzle.creatorTeam):roomData.puzzle.creatorTeam;
     const scores={...(roomData.scores||{0:0,1:0})};
     if(finished)scores[winner]=(scores[winner]||0)+1;
-    const revealedMask=graphemes(answer).map(c=>/\\s/u.test(c)?" ":/[.,!?'"():\\-]/u.test(c)?c:(nextGuesses[c]?c:"_")).join("");
+    const revealedMask=graphemes(answer).map(ch=>/\\s/u.test(ch)?" ":/[.,!?'"():\\-]/u.test(ch)?ch:([...ch].every(part=>nextGuesses[part])?ch:"_")).join("");
     const patch={guesses:nextGuesses,wrong,finished,winner,scores,puzzle:{...roomData.puzzle,mask:revealedMask}};
     await updateRoom(patch);
     if(!correct&&!finished)toast(`തെറ്റായ അക്ഷരം! ഇനി ${5-wrong} അവസരം.`);
@@ -242,6 +288,9 @@
   document.querySelectorAll(".mode-choice").forEach(b=>b.addEventListener("click",()=>{selectedMode=b.dataset.mode;document.querySelectorAll(".mode-choice").forEach(x=>x.classList.toggle("selected",x===b));}));
   $("createRoom").addEventListener("click",createRoom); $("joinRoom").addEventListener("click",joinRoom);
   $("startGame").addEventListener("click",startGame); $("submitPuzzle").addEventListener("click",submitPuzzle);
+  $("addWordSpace").addEventListener("click",()=>addAnswerCharacter(" "));
+  $("undoAnswer").addEventListener("click",undoAnswerCharacter);
+  $("clearAnswer").addEventListener("click",()=>{draftAnswer="";renderCreatorBuilder();});
   $("nextRound").addEventListener("click",nextRound); $("backToLobby").addEventListener("click",leaveRoom); $("leaveWaiting").addEventListener("click",leaveRoom);
   $("roomCodeDisplay").addEventListener("click",()=>{navigator.clipboard?.writeText(roomCode).then(()=>toast("മുറിയുടെ കോഡ് പകർത്തി!")).catch(()=>toast("കോഡ്: "+roomCode));});
   $("roomCode").addEventListener("input",e=>e.target.value=e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,""));
