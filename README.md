@@ -8,7 +8,8 @@ A static, Malayalam-first browser game starter for 1v1 and 2v2 movie guessing. T
 - 1v1 and 2v2 room modes
 - Room codes and player list
 - Drawing pads: draw the movie title and individual Malayalam letters directly on puzzle slots
-- Experimental Tesseract.js Malayalam OCR in the browser, with editable recognition output for the hidden title
+- Manual drawing pads for guesses; the question team reviews drawings and marks them correct or incorrect
+- Live side chat shared by players in the room
 - Correct letter guesses reveal every matching position
 - Five incorrect unique letter guesses end the round
 - Five incorrect guesses end the round
@@ -62,13 +63,11 @@ This repository includes `.github/workflows/pages.yml`.
 - For real multiplayer, deploy to GitHub Pages after configuring Firebase.
 - Open the deployed page on two different browsers/devices, create a room, then join using the room code.
 - A room creator is assigned to Team A. Joined players are assigned to Team B. In 2v2, two players per team are supported.
-- The host draws the movie title on the answer pad, runs experimental OCR, checks/edits the recognized title, and submits it. Guessers draw a Malayalam letter directly on a blank slot and press the recognition button. A correct unique letter reveals all matching occurrences; each incorrect unique letter counts toward five. The hidden answer remains in the host-only `roomSecrets/{code}` path.
+- The host types the Malayalam movie title and submits it; the answer stays hidden in `roomSecrets/{code}`. The guessing team draws a Malayalam letter directly in a blank slot and sends it. The host reviews the drawing and marks it correct with a green check or incorrect with a red cross. Five incorrect marks end the round. Players can chat in the side panel.
 
-## Experimental Malayalam handwriting recognition
+## Manual drawing and review
 
-The page loads Tesseract.js from a public CDN and asks its Malayalam (`mal`) OCR model to read the canvas. This is an experiment, not reliable handwritten Malayalam recognition: the available OCR model is primarily intended for printed text, so handwritten characters, vowel signs, chillus, and conjuncts may be misread or not recognized at all. The creator can edit the recognized title before submitting it. Guessers should draw one large, clear character per blank; if OCR fails, clear the pad and try again. A future version should use a Malayalam handwriting-trained model or a dedicated inference service. Internet access is needed to download the OCR library and language data.
-
-Malayalam Unicode combines consonants, vowel signs, and conjunct clusters. This prototype checks a recognized base letter and reveals all matching code points, so complex clusters may not reveal exactly as a native Malayalam reader expects.
+Automatic handwriting recognition has been removed. The guessing team draws directly in a blank and submits the image. The question-setting host reviews the drawing and marks it with a green check for correct or a red cross for incorrect. The side chat is synchronized through Firebase in online rooms. The host is responsible for judging each drawing; the game does not infer which letter was drawn.
 
 ## Security and fairness checklist before public launch
 
