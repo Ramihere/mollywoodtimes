@@ -72,8 +72,12 @@
     }
     localMode=true; isHost=true; roomCode=makeCode();
     const host={uid:"local-host",name:myName,team:0};
-    localPlayers=[host,{uid:"demo-guest",name:"സുഹൃത്ത് (ഡെമോ)",team:1}];
-    localState=freshRoom(roomCode,selectedMode,host); localState.players={"local-host":host,"demo-guest":localPlayers[1]}; localState.hostUid="local-host"; uid="local-host";
+    localPlayers=selectedMode==="2v2"
+      ? [host,{uid:"demo-a2",name:"ടീം A ഡെമോ",team:0},{uid:"demo-b1",name:"സുഹൃത്ത് (ഡെമോ)",team:1},{uid:"demo-b2",name:"ടീം B ഡെമോ",team:1}]
+      : [host,{uid:"demo-guest",name:"സുഹൃത്ത് (ഡെമോ)",team:1}];
+    localState=freshRoom(roomCode,selectedMode,host);
+    localState.players=Object.fromEntries(localPlayers.map(p=>[p.uid,p]));
+    localState.hostUid="local-host"; uid="local-host";
     roomData=localState; $("roomCodeDisplay").innerHTML=`${roomCode} <span>▢</span>`; $("gameRoomCode").textContent=roomCode;
     setScreen($waiting); renderPlayers();
     say("waitingMessage","ഡെമോ മോഡ്: ഈ ബ്രൗസറിൽ മാത്രം പ്രവർത്തിക്കും. ഓൺലൈൻ കളിക്ക് Firebase ക്രമീകരിക്കൂ.");
