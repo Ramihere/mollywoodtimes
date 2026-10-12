@@ -13,3 +13,6 @@
 @media(max-width:760px){.creator-alphabet-tray{grid-template-columns:repeat(6,minmax(0,1fr))}.builder-chip{min-width:30px;min-height:38px}}
 
 .letter-slot.placed{color:var(--orange);border-color:var(--orange)} .letter-slot.drag-over{border-color:var(--mint);background:#1b2630}
+
+.builder-chip.builder-slot{min-width:44px;min-height:46px;background:#171326;border:1px dashed #a18ac7;color:#a18ac7;font-size:1.5rem;cursor:copy}
+.answer-builder .builder-chip.drag-over{border-color:var(--mint);background:#1b2630;color:var(--mint);transform:scale(1.06)}
