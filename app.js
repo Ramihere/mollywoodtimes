@@ -5,7 +5,7 @@
   const SIGNS = [..."ാിീുൂൃൄൢൣെേൈൊോൌംഃ്ൺൻർൽൾൿ"];
   const ALPHABET = [...new Set([...MALAYALAM, ...SIGNS])];
   const $lobby = $("lobby"), $waiting = $("waiting"), $game = $("game");
-  let selectedMode = "1v1", localMode = true, db = null, auth = null, uid = "local-"+Math.random().toString(36).slice(2);
+  let selectedMode = "1v1", localMode = true, db = null, auth = null, uid = "local-"+Math.random().toString(36).slice(2), selectedGuessIndex = null;
   let roomCode = "", roomRef = null, roomData = null, unsubscribe = null, myName = "", toastTimer = null;
   let localPlayers = [], localState = null, isHost = false, localHostAnswer = "", draftAnswer = "";
   const normalize = s => (s || "").normalize("NFC").replace(/\s+/g," ").trim();
@@ -139,23 +139,22 @@
     $("team0Card").classList.toggle("active",p&&p.team===0); $("team1Card").classList.toggle("active",p&&p.team===1);
     $("roundTitle").textContent=roomData.finished?"റൗണ്ട് അവസാനിച്ചു":`റൗണ്ട് ${roomData.round||1}`;
     $("creatorTools").classList.toggle("hidden",!!puzzle||!isHost);
-    if (!puzzle && isHost) renderCreatorBuilder();
+    $("guessDrawingTools").classList.toggle("hidden",!puzzle||!isMyTurnToGuess()||!!roomData.finished);
+    resizeDrawingPads();
     $("nextRound").classList.toggle("hidden",!roomData.finished||!isHost);
     $("hintBtn").disabled=!puzzle||!puzzle.hint||!isMyTurnToGuess();
     if(!puzzle){
-      $("turnBanner").textContent=isHost?"നിങ്ങളുടെ ടീം സിനിമയുടെ പേര് തയ്യാറാക്കൂ.":"ഹോസ്റ്റ് ചോദ്യം തയ്യാറാക്കുകയാണ്…";
-      $("wordSlots").innerHTML=""; $("alphabetTray").innerHTML="";
-      say("gameMessage",isHost?"മലയാളത്തിൽ സിനിമയുടെ പേര് നൽകൂ. ഉത്തരം മറച്ചുവെക്കും.":"ചോദ്യം വരുന്നതുവരെ കാത്തിരിക്കൂ.");
+      $("turnBanner").textContent=isHost?"നിങ്ങളുടെ ടീം സിനിമയുടെ പേര് വരയ്ക്കൂ.":"ഹോസ്റ്റ് ചോദ്യം തയ്യാറാക്കുകയാണ്…";
+      $("wordSlots").innerHTML="";
+      say("gameMessage",isHost?"മലയാളത്തിൽ പേര് വരച്ച് തിരിച്ചറിയുക. ഉത്തരം മറച്ചുവെക്കും.":"ചോദ്യം വരുന്നതുവരെ കാത്തിരിക്കൂ.");
       return;
     }
     const creatorTeam=puzzle.creatorTeam, guessingTeam=1-creatorTeam;
     $("turnBanner").textContent=p?.team===creatorTeam?"നിങ്ങളുടെ ടീമാണ് ചോദ്യം ഒരുക്കിയത്. മറുവശം ഊഹിക്കട്ടെ.":`ടീം ${guessingTeam===0?"A":"B"} ഊഹിക്കുന്നു — അക്ഷരങ്ങൾ തിരഞ്ഞെടുക്കൂ!`;
     $("mistakesLabel").innerHTML=`തെറ്റുകൾ <b>${roomData.wrong||0}</b>/5`;
-    const answer=localHostAnswer;
-    const answerChars=graphemes(answer||puzzle.mask||"");
-    const guessed=roomData.guesses||{}, placements=roomData.placements||{};
-    // The host publishes only the masked/revealed puzzle, never the full answer.
-    const shown=Array.from(puzzle.mask||answer||"");
+    const placements=roomData.placements||{};
+    // The full answer is never rendered to non-host clients.
+    const shown=Array.from(puzzle.mask||"");
     const slots=$("wordSlots"); slots.innerHTML="";
     for(let index=0;index<shown.length;index++){
       const ch=shown[index], span=document.createElement("span"), slotIndex=index;
@@ -164,31 +163,17 @@
       else if(isMalayalamSign(ch)){span.className="letter-slot punctuation";span.textContent=ch;}
       else {
         const revealed=ch!=="_", placed=placements[index]||"";
-        span.className="letter-slot"+(revealed?" revealed":placed?" placed":"");
+        span.className="letter-slot"+(revealed?" revealed":placed?" placed":"")+(slotIndex===selectedGuessIndex?" selected-slot":"");
         span.textContent=revealed?ch:placed;
-        if (!revealed && isMyTurnToGuess() && !roomData.finished) {
-          span.ondragover=e=>{e.preventDefault();span.classList.add("drag-over");};
-          span.ondragleave=()=>span.classList.remove("drag-over");
-          span.ondrop=e=>{e.preventDefault();e.stopPropagation();span.classList.remove("drag-over");const tile=e.dataTransfer.getData("text/plain");if(tile)guessLetter(tile,slotIndex);};
-        }
+        if(!revealed && isMyTurnToGuess() && !roomData.finished) span.addEventListener("click",()=>{selectedGuessIndex=slotIndex;renderGame();});
       }
       slots.appendChild(span);
     }
-    const tray=$("alphabetTray");tray.innerHTML="";
-    ALPHABET.forEach(ch=>{
-      const b=document.createElement("button");b.type="button";b.className="letter-tile";
-      b.textContent=ch;b.draggable=isMyTurnToGuess()&&!roomData.finished;
-      b.disabled=!isMyTurnToGuess()||roomData.finished;
-      b.setAttribute("aria-label",`അക്ഷരം ${ch}`);
-      b.addEventListener("click",()=>toast("അക്ഷരം ഡാഷിലേക്ക് വലിച്ചിടൂ."));
-      b.addEventListener("dragstart",e=>{e.dataTransfer.setData("text/plain",ch);e.dataTransfer.effectAllowed="copy";});
-      tray.appendChild(b);
-    });
-    slots.ondragover=e=>{if(isMyTurnToGuess()&&!roomData.finished){e.preventDefault();slots.classList.add("drag-over");}};
-    slots.ondragleave=()=>slots.classList.remove("drag-over");
-    slots.ondrop=e=>{e.preventDefault();slots.classList.remove("drag-over");const ch=e.dataTransfer.getData("text/plain");if(ch)guessLetter(ch,null);};
+    if(selectedGuessIndex!==null && shown[selectedGuessIndex]!=="_") selectedGuessIndex=null;
+    if(selectedGuessIndex===null) selectedGuessIndex=shown.findIndex((ch,i)=>ch==="_" && !(placements[i]||""));
+    $("selectedSlotLabel").textContent=selectedGuessIndex===null?"ഡാഷ് തിരഞ്ഞെടുക്കുക":`സ്ഥാനം ${selectedGuessIndex+1}`;
     if(roomData.finished) say("gameMessage",roomData.winner===null?"റൗണ്ട് അവസാനിച്ചു.":`ടീം ${roomData.winner===0?"A":"B"} ഈ റൗണ്ട് നേടി!`);
-    else if(isMyTurnToGuess()) say("gameMessage","ട്രേയിൽ നിന്ന് അക്ഷരം ക്ലിക്ക് ചെയ്യൂ അല്ലെങ്കിൽ ബോർഡിലേക്ക് വലിച്ചിടൂ.");
+    else if(isMyTurnToGuess()) say("gameMessage","ഒരു ഒഴിഞ്ഞ ഡാഷ് തിരഞ്ഞെടുക്കുക; അതിനുള്ള അക്ഷരം വരച്ച് തിരിച്ചറിയൂ.");
     else say("gameMessage","മറു ടീമിന്റെ ഊഹത്തിനായി കാത്തിരിക്കുന്നു.");
     $("boardHint").textContent="ശരിയായ അക്ഷരങ്ങൾ തുറക്കും · അഞ്ച് തെറ്റുകൾ കഴിഞ്ഞാൽ റൗണ്ട് തീരും";
   }
@@ -255,19 +240,18 @@
   }
   async function submitPuzzle() {
     if(!isHost||!roomData)return;
-    const answer=normalize(draftAnswer), hint=normalize($("movieHint").value);
-    if(!answer||!/[ഀ-ൿ]/u.test(answer)){toast("സിനിമയുടെ പേര് മലയാളത്തിൽ നൽകൂ.");return;}
-    if(answer.includes("_")){toast("എല്ലാ ഡാഷുകളിലും അക്ഷരമോ ചിഹ്നമോ വലിച്ചിട്ട് ചേർക്കൂ.");return;}
-    if(graphemes(answer).filter(c=>!/\s/u.test(c)).length>50){toast("ചെറിയ സിനിമയുടെ പേര് പരീക്ഷിക്കൂ.");return;}
+    const answer=normalize($("movieAnswer").value), hint=normalize($("movieHint").value);
+    if(!answer||!/[\u0D00-\u0D7F]/u.test(answer)){toast("സിനിമയുടെ പേര് വരച്ച് തിരിച്ചറിഞ്ഞ് ഉറപ്പാക്കൂ.");return;}
+    if(graphemes(answer).filter(c=>! /\s/u.test(c)).length>50){toast("ചെറിയ സിനിമയുടെ പേര് പരീക്ഷിക്കൂ.");return;}
     const creatorTeam=myPlayer()?.team??0;
     localHostAnswer=answer;
-    const puzzle={creatorTeam,mask:Array.from(answer).map(c=>/\s/u.test(c)||isMalayalamSign(c)||/[.,!?'"():\-]/u.test(c)?c:"_").join(""),hint:hint||""};
+    const puzzle={creatorTeam,mask:Array.from(answer).map(c=>/\s/u.test(c)||isMalayalamSign(c)||/[.,!?'"():\\-]/u.test(c)?c:"_").join(""),hint:hint||""};
     if(localMode){localState.puzzle=puzzle;localState.guesses={};localState.placements={};localState.wrong=0;localState.finished=false;localState.winner=null;roomData=localState;renderGame();}
     else {
       await roomRef.update({puzzle,guesses:{},placements:{},wrong:0,finished:false,winner:null});
       await db.ref("roomSecrets/"+roomCode).set({answer,hint});
     }
-    draftAnswer=""; $("movieHint").value=""; renderCreatorBuilder();
+    $("movieAnswer").value="";$("movieHint").value="";clearCanvas("answerCanvas");
   }
   async function guessLetter(ch,index=null) {
     if(!isMyTurnToGuess()||roomData.finished||!roomData.puzzle)return;
@@ -332,13 +316,70 @@
   document.querySelectorAll(".mode-choice").forEach(b=>b.addEventListener("click",()=>{selectedMode=b.dataset.mode;document.querySelectorAll(".mode-choice").forEach(x=>x.classList.toggle("selected",x===b));}));
   $("createRoom").addEventListener("click",createRoom); $("joinRoom").addEventListener("click",joinRoom);
   $("startGame").addEventListener("click",startGame); $("submitPuzzle").addEventListener("click",submitPuzzle);
-  $("addDash").addEventListener("click",addDash); $("addWordSpace").addEventListener("click",addWordSpace);
-  $("undoAnswer").addEventListener("click",undoAnswerCharacter);
-  $("clearAnswer").addEventListener("click",()=>{draftAnswer="";renderCreatorBuilder();});
   $("nextRound").addEventListener("click",nextRound); $("backToLobby").addEventListener("click",leaveRoom); $("leaveWaiting").addEventListener("click",leaveRoom);
   $("roomCodeDisplay").addEventListener("click",()=>{navigator.clipboard?.writeText(roomCode).then(()=>toast("മുറിയുടെ കോഡ് പകർത്തി!")).catch(()=>toast("കോഡ്: "+roomCode));});
   $("roomCode").addEventListener("input",e=>e.target.value=e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,""));
   $("helpBtn").addEventListener("click",()=>$("helpDialog").showModal()); $("closeHelp").addEventListener("click",()=>$("helpDialog").close());
+
+  // Pointer-enabled drawing pads for mouse, stylus and touch.
+  const canvasContexts={};
+  function initDrawingCanvas(id){
+    const canvas=$(id);if(!canvas||canvasContexts[id])return;
+    const ctx=canvas.getContext("2d");canvasContexts[id]=ctx;
+    let drawing=false,last=null;
+    const resize=()=>{
+      const rect=canvas.getBoundingClientRect();if(!rect.width)return;
+      const old=document.createElement("canvas");old.width=canvas.width;old.height=canvas.height;
+      if(old.width&&old.height)old.getContext("2d").drawImage(canvas,0,0);
+      const ratio=Math.max(1,window.devicePixelRatio||1);
+      canvas.width=Math.round(rect.width*ratio);canvas.height=Math.round((canvas.classList.contains("answer-canvas")?250:220)*ratio);
+      ctx.setTransform(ratio,0,0,ratio,0,0);ctx.fillStyle="#fff";ctx.fillRect(0,0,rect.width,canvas.classList.contains("answer-canvas")?250:220);
+      ctx.strokeStyle="#20172d";ctx.lineWidth=5;ctx.lineCap="round";ctx.lineJoin="round";
+      if(old.width&&old.height)ctx.drawImage(old,0,0,old.width,old.height,0,0,rect.width,canvas.classList.contains("answer-canvas")?250:220);
+    };
+    canvas.style.height=canvas.classList.contains("answer-canvas")?"250px":"220px";
+    canvasContexts[id]={ctx,resize};
+    resize();
+    canvas.addEventListener("pointerdown",e=>{e.preventDefault();canvas.setPointerCapture(e.pointerId);drawing=true;const r=canvas.getBoundingClientRect();last={x:e.clientX-r.left,y:e.clientY-r.top};ctx.beginPath();ctx.arc(last.x,last.y,2.5,0,Math.PI*2);ctx.fillStyle="#20172d";ctx.fill();});
+    canvas.addEventListener("pointermove",e=>{if(!drawing)return;e.preventDefault();const r=canvas.getBoundingClientRect(),p={x:e.clientX-r.left,y:e.clientY-r.top};ctx.beginPath();ctx.moveTo(last.x,last.y);ctx.lineTo(p.x,p.y);ctx.stroke();last=p;});
+    const stop=()=>{drawing=false;last=null;};canvas.addEventListener("pointerup",stop);canvas.addEventListener("pointercancel",stop);
+  }
+  function resizeDrawingPads(){Object.values(canvasContexts).forEach(x=>x.resize?.());}
+  function clearCanvas(id){
+    const canvas=$(id),entry=canvasContexts[id];if(!canvas||!entry)return;
+    const ctx=entry.ctx,ratio=Math.max(1,window.devicePixelRatio||1),w=canvas.clientWidth||canvas.width/ratio,h=canvas.classList.contains("answer-canvas")?250:220;
+    ctx.save();ctx.setTransform(ratio,0,0,ratio,0,0);ctx.fillStyle="#fff";ctx.fillRect(0,0,w,h);ctx.restore();
+  }
+  async function recognizeCanvas(id,statusId){
+    if(!window.Tesseract){say(statusId,"OCR ലൈബ്രറി ലോഡ് ആയില്ല. ഇന്റർനെറ്റ് കണക്ഷൻ പരിശോധിക്കൂ.");return "";}
+    say(statusId,"മലയാളം എഴുത്ത് തിരിച്ചറിയാൻ ശ്രമിക്കുന്നു…");
+    try{
+      const result=await Tesseract.recognize($(id),"mal",{logger:m=>{if(m.status==="recognizing text")say(statusId,"തിരിച്ചറിയുന്നു… "+Math.round((m.progress||0)*100)+"%");}});
+      const text=normalize(result.data.text).replace(/[^\u0D00-\u0D7F\s]/gu,"").replace(/\s+/g," ").trim();
+      say(statusId,text?"തിരിച്ചറിഞ്ഞത്: "+text+" (വിശ്വാസനില "+Math.round(result.data.confidence||0)+"%)":"തിരിച്ചറിയാൻ കഴിഞ്ഞില്ല. കൂടുതൽ വ്യക്തമായി വീണ്ടും വരയ്ക്കൂ.");
+      return text;
+    }catch(e){console.warn(e);say(statusId,"തിരിച്ചറിയാൻ കഴിഞ്ഞില്ല. വീണ്ടും ശ്രമിക്കൂ.");return "";}
+  }
+  $("recognizeAnswer").addEventListener("click",async()=>{
+    const text=await recognizeCanvas("answerCanvas","answerOcrStatus");if(text)$("movieAnswer").value=text;
+  });
+  $("clearAnswerCanvas").addEventListener("click",()=>{clearCanvas("answerCanvas");$("movieAnswer").value="";say("answerOcrStatus","പുതിയതായി വരയ്ക്കാം.");});
+  $("clearGuessCanvas").addEventListener("click",()=>{clearCanvas("guessCanvas");say("guessOcrStatus","ഒരു അക്ഷരം വ്യക്തമായി വരയ്ക്കുക.");});
+  $("recognizeGuess").addEventListener("click",async()=>{
+    if(!isMyTurnToGuess()||roomData?.finished){toast("ഇപ്പോൾ നിങ്ങളുടെ ടീമിന്റെ ഊഹിക്കാനുള്ള ടേൺ അല്ല.");return;}
+    if(selectedGuessIndex===null||selectedGuessIndex<0){toast("ആദ്യം ഒരു ഒഴിഞ്ഞ ഡാഷ് തിരഞ്ഞെടുക്കൂ.");return;}
+    const text=await recognizeCanvas("guessCanvas","guessOcrStatus");
+    const letter=graphemes(text).find(ch=>/[\u0D05-\u0D39\u0D7A-\u0D7F]/u.test(ch));
+    if(!letter){say("guessOcrStatus","അക്ഷരം തിരിച്ചറിയാനായില്ല. വലുതായി ഒറ്റ അക്ഷരം മാത്രം വരയ്ക്കൂ.");return;}
+    const basic=[...letter].find(ch=>/[\u0D05-\u0D39\u0D7A-\u0D7F]/u.test(ch));
+    if(!basic){say("guessOcrStatus","മലയാളം അക്ഷരം തിരിച്ചറിയാനായില്ല.");return;}
+    say("guessOcrStatus","തിരിച്ചറിഞ്ഞ അക്ഷരം: "+letter+" — പരിശോധിക്കുന്നു…");
+    await guessLetter(basic,selectedGuessIndex);
+    clearCanvas("guessCanvas");
+  });
+  initDrawingCanvas("answerCanvas");initDrawingCanvas("guessCanvas");
+  window.addEventListener("resize",resizeDrawingPads);
+
   $("playerName").value="";
   if(!firebaseReady) $("connectionBadge").textContent="ഡെമോ മോഡ്";
 })();
