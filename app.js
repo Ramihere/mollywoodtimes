@@ -153,14 +153,14 @@
     const answer=localHostAnswer;
     const answerChars=graphemes(answer||puzzle.mask||"");
     const guessed=roomData.guesses||{};
-    const shown=answerChars.length?answerChars:graphemes(puzzle.mask||"");
+    const shown=graphemes(puzzle.mask||answer||"");
     const slots=$("wordSlots"); slots.innerHTML="";
     shown.forEach(ch=>{
       const span=document.createElement("span");
       if(ch===" "){span.className="letter-slot space";span.textContent="";} 
       else if(/[.,!?'"():\-]/u.test(ch)){span.className="letter-slot punctuation";span.textContent=ch;}
       else {
-        const revealed=[...ch].every(part=>guessed[part]);
+        const revealed=ch!=="_";
         span.className="letter-slot"+(revealed?" revealed":"");
         span.textContent=revealed?ch:"";
       }
@@ -258,12 +258,12 @@
     if(!answer){toast("ഹോസ്റ്റിന്റെ ബ്രൗസറിൽ ഉത്തരം ലഭ്യമല്ല. ചോദ്യം വീണ്ടും തയ്യാറാക്കൂ.");return;}
     const correct=answer.includes(ch), nextGuesses={...guessed,[ch]:true};
     const wrong=(roomData.wrong||0)+(correct?0:1);
-    const won=[...answer].every(c=>/\\s/u.test(c)||/[.,!?'"():\\-]/u.test(c)||nextGuesses[c]);
+    const won=[...answer].every(c=>/\s/u.test(c)||/[.,!?'"():\\-]/u.test(c)||nextGuesses[c]);
     const finished=won||wrong>=5;
     const winner=won?(1-roomData.puzzle.creatorTeam):roomData.puzzle.creatorTeam;
     const scores={...(roomData.scores||{0:0,1:0})};
     if(finished)scores[winner]=(scores[winner]||0)+1;
-    const revealedMask=graphemes(answer).map(ch=>/\\s/u.test(ch)?" ":/[.,!?'"():\\-]/u.test(ch)?ch:([...ch].every(part=>nextGuesses[part])?ch:"_")).join("");
+    const revealedMask=graphemes(answer).map(ch=>/\s/u.test(ch)?" ":/[.,!?'"():\\-]/u.test(ch)?ch:([...ch].every(part=>nextGuesses[part])?ch:"_")).join("");
     const patch={guesses:nextGuesses,wrong,finished,winner,scores,puzzle:{...roomData.puzzle,mask:revealedMask}};
     await updateRoom(patch);
     if(!correct&&!finished)toast(`തെറ്റായ അക്ഷരം! ഇനി ${5-wrong} അവസരം.`);
