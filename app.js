@@ -99,11 +99,19 @@
   function listenRoom() {
     if(unsubscribe) unsubscribe();
     if(!roomRef) return;
+    let lastRenderKey="";
     const cb=roomRef.on("value",snap=>{
       if(!snap.exists()){toast("മുറി അവസാനിച്ചു.");returnToLobby();return;}
-      roomData=snap.val(); $("gameRoomCode").textContent=roomCode; $("roomCodeDisplay").innerHTML=`${roomCode} <span>▢</span>`;
-      if(roomData.status==="waiting"){setScreen($waiting);renderPlayers();}
-      else {setScreen($game);renderGame();}
+      const nextData=snap.val();
+      // Chat-only updates must not rebuild drawing canvases or erase unfinished strokes.
+      const renderKey=JSON.stringify({...nextData,chat:undefined});
+      const shouldRender=renderKey!==lastRenderKey;
+      lastRenderKey=renderKey;
+      roomData=nextData; $("gameRoomCode").textContent=roomCode; $("roomCodeDisplay").innerHTML=roomCode+" <span>▢</span>";
+      if(shouldRender){
+        if(roomData.status==="waiting"){if($waiting.classList.contains("hidden"))setScreen($waiting);renderPlayers();}
+        else {if($game.classList.contains("hidden"))setScreen($game);renderGame();}
+      }
     });
     let requestRef = null, requestCb = null;
     if (isHost) {
