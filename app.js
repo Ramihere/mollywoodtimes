@@ -13,6 +13,7 @@
     if (window.Intl && Intl.Segmenter) return [...new Intl.Segmenter("ml",{granularity:"grapheme"}).segment(s)].map(x=>x.segment);
     return [...s];
   };
+  const isMalayalamSign = ch => /[\u0D02-\u0D03\u0D3A-\u0D4D\u0D57]/u.test(ch);
   const show = el => el.classList.remove("hidden"), hide = el => el.classList.add("hidden");
   const say = (id, msg) => { $(id).textContent = msg || ""; };
   function toast(msg) {
@@ -154,24 +155,27 @@
     const answerChars=graphemes(answer||puzzle.mask||"");
     const guessed=roomData.guesses||{}, placements=roomData.placements||{};
     // The host publishes only the masked/revealed puzzle, never the full answer.
-    const shown=graphemes(puzzle.mask||answer||"");
+    const shown=Array.from(puzzle.mask||answer||"");
     const slots=$("wordSlots"); slots.innerHTML="";
-    shown.forEach((ch,index)=>{
-      const span=document.createElement("span");
+    for(let index=0;index<shown.length;index++){
+      const ch=shown[index], span=document.createElement("span"), slotIndex=index;
       if(ch===" "){span.className="letter-slot space";span.textContent="";}
-      else if(/[.,!?'":\\-]/u.test(ch)){span.className="letter-slot punctuation";span.textContent=ch;}
+      else if(/[.,!?\'":\\-]/u.test(ch)){span.className="letter-slot punctuation";span.textContent=ch;}
+      else if(isMalayalamSign(ch)){span.className="letter-slot punctuation";span.textContent=ch;}
       else {
         const revealed=ch!=="_", placed=placements[index]||"";
+        let visibleText=revealed?ch:placed;
+        while(index+1<shown.length && isMalayalamSign(shown[index+1])) visibleText+=shown[++index];
         span.className="letter-slot"+(revealed?" revealed":placed?" placed":"");
-        span.textContent=revealed?ch:placed;
+        span.textContent=visibleText;
         if (!revealed && isMyTurnToGuess() && !roomData.finished) {
           span.ondragover=e=>{e.preventDefault();span.classList.add("drag-over");};
           span.ondragleave=()=>span.classList.remove("drag-over");
-          span.ondrop=e=>{e.preventDefault();e.stopPropagation();span.classList.remove("drag-over");const tile=e.dataTransfer.getData("text/plain");if(tile)guessLetter(tile,index);};
+          span.ondrop=e=>{e.preventDefault();e.stopPropagation();span.classList.remove("drag-over");const tile=e.dataTransfer.getData("text/plain");if(tile)guessLetter(tile,slotIndex);};
         }
       }
       slots.appendChild(span);
-    });
+    }
     const tray=$("alphabetTray");tray.innerHTML="";
     ALPHABET.forEach(ch=>{
       const b=document.createElement("button");b.type="button";b.className="letter-tile";
@@ -238,7 +242,7 @@
     if(graphemes(answer).filter(c=>!/\s/u.test(c)).length>50){toast("ചെറിയ സിനിമയുടെ പേര് പരീക്ഷിക്കൂ.");return;}
     const creatorTeam=myPlayer()?.team??0;
     localHostAnswer=answer;
-    const puzzle={creatorTeam,mask:graphemes(answer).map(c=>/\s/u.test(c)?" ":/[.,!?'"():\-]/u.test(c)?c:"_").join(""),hint:hint||""};
+    const puzzle={creatorTeam,mask:Array.from(answer).map(c=>/\s/u.test(c)||isMalayalamSign(c)||/[.,!?\'"():\-]/u.test(c)?c:"_").join(""),hint:hint||""};
     if(localMode){localState.puzzle=puzzle;localState.guesses={};localState.placements={};localState.wrong=0;localState.finished=false;localState.winner=null;roomData=localState;renderGame();}
     else {
       await roomRef.update({puzzle,guesses:{},placements:{},wrong:0,finished:false,winner:null});
@@ -262,7 +266,7 @@
     if(!isHost||!roomData||!roomData.puzzle||roomData.finished)return;
     const answer=localHostAnswer;
     if(!answer){toast("ഹോസ്റ്റിന്റെ ബ്രൗസറിൽ ഉത്തരം ലഭ്യമല്ല. ചോദ്യം വീണ്ടും തയ്യാറാക്കൂ.");return;}
-    const answerSlots=graphemes(answer), maskSlots=graphemes(roomData.puzzle.mask||"");
+    const answerSlots=Array.from(answer), maskSlots=Array.from(roomData.puzzle.mask||"");
     const placements={...(roomData.placements||{})};
     if(index===null) index=maskSlots.findIndex(slot=>slot==="_");
     if(index<0||index>=answerSlots.length||maskSlots[index]!=="_")return;
@@ -283,7 +287,7 @@
     const winner=won?(1-roomData.puzzle.creatorTeam):roomData.puzzle.creatorTeam;
     const scores={...(roomData.scores||{0:0,1:0})};
     if(finished)scores[winner]=(scores[winner]||0)+1;
-    const revealedMask=answerSlots.map((target,i)=>/\s/u.test(target)?" ":/[.,!?'":\-]/u.test(target)?target:(matchesSlot(target,placements[i]||"")?target:"_")).join("");
+    const revealedMask=answerSlots.map((target,i)=>/\s/u.test(target)||isMalayalamSign(target)||/[.,!?\'":\-]/u.test(target)?target:(matchesSlot(target,placements[i]||"")?target:"_")).join("");
     const patch={guesses:{...(roomData.guesses||{}),[String(index)+":"+ch]:true},placements,wrong,finished,winner,scores,puzzle:{...roomData.puzzle,mask:revealedMask}};
     await updateRoom(patch);
     if(!correct&&!finished)toast(`തെറ്റായ അക്ഷരം! ഇനി ${5-wrong} അവസരം.`);
