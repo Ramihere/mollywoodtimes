@@ -25,3 +25,7 @@
 .letter-slot{cursor:pointer}
 .letter-slot.selected-slot{outline:2px solid var(--mint);outline-offset:4px;border-radius:4px}
 @media(max-width:760px){.drawing-tools,.creator-tools{padding:13px}.drawing-canvas{height:200px}.answer-canvas{height:220px}}
+
+.slot-draw-canvas{display:block;width:42px;height:50px;background:#fff;border:0;border-bottom:3px solid #655a83;border-radius:5px;touch-action:none;cursor:crosshair}
+.letter-slot.selected-slot .slot-draw-canvas{border-bottom-color:var(--mint);outline:2px solid var(--mint);outline-offset:1px}
+.letter-slot{padding:0}
