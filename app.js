@@ -323,7 +323,11 @@
     const drawings={...(roomData.drawings||{})}, marks={...(roomData.marks||{})};
     delete drawings[index];delete marks[index];
     if(localMode){localState.drawings=drawings;localState.marks=marks;roomData=localState;renderGame();}
-    else {await roomRef.update({drawings,marks});}
+    else {
+      // Remove the mark first so rules can verify the player owns the drawing.
+      await roomRef.child("marks/"+index).remove();
+      await roomRef.child("drawings/"+index).remove();
+    }
   }
   async function judgeDrawing(index,correct,chosenLetter=null) {
     if(!isHost||!roomData?.puzzle||roomData.finished)return;
