@@ -125,6 +125,7 @@
     const players=currentPlayers(), max=roomData.mode==="2v2"?4:2;
     if(players.length<max){toast("എല്ലാ കളിക്കാരും ചേരട്ടെ.");return;}
     await updateRoom({status:"playing",round:1,scores:{0:0,1:0},puzzle:null,guesses:{},wrong:0,finished:false,winner:null});
+    setScreen($game);
     renderGame();
   }
   function renderGame() {
