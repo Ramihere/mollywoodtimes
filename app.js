@@ -111,7 +111,7 @@
         const request = snap.val();
         if (!request || !request.letter) return;
         await snap.ref.remove();
-        await hostProcessGuess(request.letter);
+        await hostProcessGuess(request.letter, Number.isInteger(request.index) ? request.index : null);
       });
     }
     unsubscribe=()=>{roomRef.off("value",cb); if(requestRef && requestCb) requestRef.off("child_added",requestCb);};
@@ -124,7 +124,7 @@
     if(!isHost){toast("ഹോസ്റ്റിന് മാത്രമേ കളി തുടങ്ങാനാകൂ.");return;}
     const players=currentPlayers(), max=roomData.mode==="2v2"?4:2;
     if(players.length<max){toast("എല്ലാ കളിക്കാരും ചേരട്ടെ.");return;}
-    await updateRoom({status:"playing",round:1,scores:{0:0,1:0},puzzle:null,guesses:{},wrong:0,finished:false,winner:null});
+    await updateRoom({status:"playing",round:1,scores:{0:0,1:0},puzzle:null,guesses:{},placements:{},wrong:0,finished:false,winner:null});
     setScreen($game);
     renderGame();
   }
@@ -152,33 +152,39 @@
     $("mistakesLabel").innerHTML=`തെറ്റുകൾ <b>${roomData.wrong||0}</b>/5`;
     const answer=localHostAnswer;
     const answerChars=graphemes(answer||puzzle.mask||"");
-    const guessed=roomData.guesses||{};
+    const guessed=roomData.guesses||{}, placements=roomData.placements||{};
+    // The host publishes only the masked/revealed puzzle, never the full answer.
     const shown=graphemes(puzzle.mask||answer||"");
     const slots=$("wordSlots"); slots.innerHTML="";
-    shown.forEach(ch=>{
+    shown.forEach((ch,index)=>{
       const span=document.createElement("span");
-      if(ch===" "){span.className="letter-slot space";span.textContent="";} 
-      else if(/[.,!?'"():\-]/u.test(ch)){span.className="letter-slot punctuation";span.textContent=ch;}
+      if(ch===" "){span.className="letter-slot space";span.textContent="";}
+      else if(/[.,!?'":\\-]/u.test(ch)){span.className="letter-slot punctuation";span.textContent=ch;}
       else {
-        const revealed=ch!=="_";
-        span.className="letter-slot"+(revealed?" revealed":"");
-        span.textContent=revealed?ch:"";
+        const revealed=ch!=="_", placed=placements[index]||"";
+        span.className="letter-slot"+(revealed?" revealed":placed?" placed":"");
+        span.textContent=revealed?ch:placed;
+        if (!revealed && isMyTurnToGuess() && !roomData.finished) {
+          span.ondragover=e=>{e.preventDefault();span.classList.add("drag-over");};
+          span.ondragleave=()=>span.classList.remove("drag-over");
+          span.ondrop=e=>{e.preventDefault();e.stopPropagation();span.classList.remove("drag-over");const tile=e.dataTransfer.getData("text/plain");if(tile)guessLetter(tile,index);};
+        }
       }
       slots.appendChild(span);
     });
     const tray=$("alphabetTray");tray.innerHTML="";
     ALPHABET.forEach(ch=>{
-      const b=document.createElement("button");b.type="button";b.className="letter-tile"+(guessed[ch]?" used "+(answer.includes(ch)?"correct":"wrong"):"");
-      b.textContent=ch;b.draggable=!guessed[ch]&&isMyTurnToGuess()&&!roomData.finished;
-      b.disabled=!!guessed[ch]||!isMyTurnToGuess()||roomData.finished;
+      const b=document.createElement("button");b.type="button";b.className="letter-tile";
+      b.textContent=ch;b.draggable=isMyTurnToGuess()&&!roomData.finished;
+      b.disabled=!isMyTurnToGuess()||roomData.finished;
       b.setAttribute("aria-label",`അക്ഷരം ${ch}`);
-      b.addEventListener("click",()=>guessLetter(ch));
+      b.addEventListener("click",()=>guessLetter(ch,null));
       b.addEventListener("dragstart",e=>{e.dataTransfer.setData("text/plain",ch);e.dataTransfer.effectAllowed="copy";});
       tray.appendChild(b);
     });
     slots.ondragover=e=>{if(isMyTurnToGuess()&&!roomData.finished){e.preventDefault();slots.classList.add("drag-over");}};
     slots.ondragleave=()=>slots.classList.remove("drag-over");
-    slots.ondrop=e=>{e.preventDefault();slots.classList.remove("drag-over");const ch=e.dataTransfer.getData("text/plain");if(ch)guessLetter(ch);};
+    slots.ondrop=e=>{e.preventDefault();slots.classList.remove("drag-over");const ch=e.dataTransfer.getData("text/plain");if(ch)guessLetter(ch,null);};
     if(roomData.finished) say("gameMessage",roomData.winner===null?"റൗണ്ട് അവസാനിച്ചു.":`ടീം ${roomData.winner===0?"A":"B"} ഈ റൗണ്ട് നേടി!`);
     else if(isMyTurnToGuess()) say("gameMessage","ട്രേയിൽ നിന്ന് അക്ഷരം ക്ലിക്ക് ചെയ്യൂ അല്ലെങ്കിൽ ബോർഡിലേക്ക് വലിച്ചിടൂ.");
     else say("gameMessage","മറു ടീമിന്റെ ഊഹത്തിനായി കാത്തിരിക്കുന്നു.");
@@ -233,47 +239,58 @@
     const creatorTeam=myPlayer()?.team??0;
     localHostAnswer=answer;
     const puzzle={creatorTeam,mask:graphemes(answer).map(c=>/\s/u.test(c)?" ":/[.,!?'"():\-]/u.test(c)?c:"_").join(""),hint:hint||""};
-    if(localMode){localState.puzzle=puzzle;localState.guesses={};localState.wrong=0;localState.finished=false;localState.winner=null;roomData=localState;renderGame();}
+    if(localMode){localState.puzzle=puzzle;localState.guesses={};localState.placements={};localState.wrong=0;localState.finished=false;localState.winner=null;roomData=localState;renderGame();}
     else {
-      await roomRef.update({puzzle,guesses:{},wrong:0,finished:false,winner:null});
+      await roomRef.update({puzzle,guesses:{},placements:{},wrong:0,finished:false,winner:null});
       await db.ref("roomSecrets/"+roomCode).set({answer,hint});
     }
     draftAnswer=""; $("movieHint").value=""; renderCreatorBuilder();
   }
-  async function guessLetter(ch) {
+  async function guessLetter(ch,index=null) {
     if(!isMyTurnToGuess()||roomData.finished||!roomData.puzzle)return;
-    const guessed=roomData.guesses||{};if(guessed[ch])return;
-    if(localMode) { await hostProcessGuess(ch); return; }
-    // Guessers submit only the chosen character. The host validates it against
-    // the answer kept in the host browser, so the answer is never sent to guessers.
+    const shown=graphemes(roomData.puzzle.mask||""), placements=roomData.placements||{};
+    if(index===null) index=shown.findIndex((slot,i)=>slot==="_" && !placements[i]);
+    if(index===null||index<0||shown[index]!=="_") { toast("ആദ്യം ഒരു ഒഴിഞ്ഞ ഡാഷിൽ അക്ഷരം ചേർക്കൂ."); return; }
+    if(localMode) { await hostProcessGuess(ch,index); return; }
+    // Only the chosen character and blank position are sent; the movie answer stays with the host.
     try {
-      await roomRef.child("guessRequests/"+uid).set({letter:ch,at:Date.now()});
+      await roomRef.child("guessRequests/"+uid).set({letter:ch,index,at:Date.now()});
       toast("അക്ഷരം അയച്ചു…");
     } catch(e) { console.error(e); toast("അക്ഷരം അയയ്ക്കാനായില്ല."); }
   }
-  async function hostProcessGuess(ch) {
+  async function hostProcessGuess(ch,index=null) {
     if(!isHost||!roomData||!roomData.puzzle||roomData.finished)return;
-    const guessed=roomData.guesses||{};if(guessed[ch])return;
     const answer=localHostAnswer;
     if(!answer){toast("ഹോസ്റ്റിന്റെ ബ്രൗസറിൽ ഉത്തരം ലഭ്യമല്ല. ചോദ്യം വീണ്ടും തയ്യാറാക്കൂ.");return;}
-    const correct=answer.includes(ch), nextGuesses={...guessed,[ch]:true};
+    const answerSlots=graphemes(answer), maskSlots=graphemes(roomData.puzzle.mask||"");
+    const placements={...(roomData.placements||{})};
+    if(index===null) index=maskSlots.findIndex((slot,i)=>slot==="_" && !placements[i]);
+    if(index<0||index>=answerSlots.length||maskSlots[index]!=="_")return;
+    const current=placements[index]||"";
+    if(current.includes(ch))return;
+    const target=answerSlots[index];
+    const correct=target.includes(ch);
+    const nextPlaced=correct?(current+ch).normalize("NFC"):current;
+    if(correct) placements[index]=nextPlaced;
     const wrong=(roomData.wrong||0)+(correct?0:1);
-    const won=[...answer].every(c=>/\s/u.test(c)||/[.,!?'"():\-]/u.test(c)||nextGuesses[c]);
+    const slotComplete=answerSlots.map((target,i)=>/\s/u.test(target)||/[.,!?'":\-]/u.test(target)||((placements[i]||"").normalize("NFC")===target.normalize("NFC")));
+    const won=slotComplete.every(Boolean);
     const finished=won||wrong>=5;
     const winner=won?(1-roomData.puzzle.creatorTeam):roomData.puzzle.creatorTeam;
     const scores={...(roomData.scores||{0:0,1:0})};
     if(finished)scores[winner]=(scores[winner]||0)+1;
-    const revealedMask=graphemes(answer).map(ch=>/\s/u.test(ch)?" ":/[.,!?'"():\-]/u.test(ch)?ch:([...ch].every(part=>nextGuesses[part])?ch:"_")).join("");
-    const patch={guesses:nextGuesses,wrong,finished,winner,scores,puzzle:{...roomData.puzzle,mask:revealedMask}};
+    const revealedMask=answerSlots.map((target,i)=>/\s/u.test(target)?" ":/[.,!?'":\-]/u.test(target)?target:((placements[i]||"").normalize("NFC")===target.normalize("NFC")?target:"_")).join("");
+    const patch={guesses:{...(roomData.guesses||{}),[String(index)+":"+ch]:true},placements,wrong,finished,winner,scores,puzzle:{...roomData.puzzle,mask:revealedMask}};
     await updateRoom(patch);
     if(!correct&&!finished)toast(`തെറ്റായ അക്ഷരം! ഇനി ${5-wrong} അവസരം.`);
+    if(correct&&!won)toast("ശരിയായ അക്ഷരം ചേർത്തു!");
     if(won)toast("ശരിയായ ഉത്തരം! 🎉");
     if(wrong>=5&&!won)toast("അഞ്ച് തെറ്റുകൾ! റൗണ്ട് അവസാനിച്ചു.");
   }
   async function nextRound() {
     if(!isHost)return;
     const next=(roomData.round||1)+1;
-    await updateRoom({round:next,puzzle:null,guesses:{},wrong:0,finished:false,winner:null});
+    await updateRoom({round:next,puzzle:null,guesses:{},placements:{},wrong:0,finished:false,winner:null});
     if(!localMode)await db.ref("roomSecrets/"+roomCode).set({answer:"",hint:""});
     localHostAnswer="";
   }
