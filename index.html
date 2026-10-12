@@ -64,24 +64,22 @@
         <div id="wordSlots" class="word-slots" aria-label="സിനിമയുടെ പേരിലെ അക്ഷരങ്ങൾ"></div>
         <p id="boardHint" class="board-hint">ശരിയായ അക്ഷരങ്ങൾ കണ്ടെത്തൂ!</p>
       </div>
-      <div class="alphabet-section">
-        <div class="alphabet-head"><div><h3>മലയാളം അക്ഷരങ്ങൾ</h3><p>ഒരു അക്ഷരം തിരഞ്ഞെടുക്കൂ അല്ലെങ്കിൽ വലിച്ചിടൂ</p></div><span id="alphabetCount" class="count-pill">അക്ഷരങ്ങൾ</span></div>
-        <div id="alphabetTray" class="alphabet-tray"></div>
+      <div id="guessDrawingTools" class="drawing-tools hidden">
+        <div class="alphabet-head"><div><h3>നിങ്ങളുടെ ഊഹം വരയ്ക്കൂ</h3><p>ഒരു ഒഴിഞ്ഞ ഡാഷ് തിരഞ്ഞെടുക്കുക, അതിൽ വരുന്ന മലയാളം അക്ഷരം പാഡിൽ വരയ്ക്കുക.</p></div><span id="selectedSlotLabel" class="count-pill">സ്ഥാനം തിരഞ്ഞെടുക്കുക</span></div>
+        <canvas id="guessCanvas" class="drawing-canvas" aria-label="മലയാളം അക്ഷരം വരയ്ക്കാനുള്ള പാഡ്"></canvas>
+        <div class="canvas-actions"><button id="recognizeGuess" class="primary-btn" type="button">അക്ഷരം തിരിച്ചറിഞ്ഞ് ഊഹിക്കൂ →</button><button id="clearGuessCanvas" class="secondary-btn" type="button">മായ്ക്കുക</button></div>
+        <p id="guessOcrStatus" class="ocr-status" role="status">ഒരു അക്ഷരം വ്യക്തമായി വരയ്ക്കുക.</p>
       </div>
       <div id="creatorTools" class="creator-tools hidden">
-        <h3 class="builder-title">ടീം A: ആദ്യം ഡാഷുകൾ ചേർക്കൂ, പിന്നെ അക്ഷരങ്ങൾ വലിച്ചിടൂ</h3>
-        <p class="builder-help">“ഡാഷ് ചേർക്കുക” അമർത്തി ഓരോ സ്ഥാനവും ഉണ്ടാക്കൂ. ശേഷം താഴെയുള്ള മലയാളം അക്ഷരങ്ങളും ചിഹ്നങ്ങളും ഒഴിഞ്ഞ ഡാഷിലേക്ക് വലിച്ചിടുക. അക്ഷരങ്ങളിൽ ക്ലിക്ക് ചെയ്താൽ ചേർക്കില്ല.</p>
-        <div id="answerBuilder" class="answer-builder" aria-label="സിനിമയുടെ പേര് തയ്യാറാക്കുന്ന സ്ഥലം"><span class="builder-placeholder">ഡാഷുകൾ ഇവിടെ ഉണ്ടാകും…</span></div>
-        <div class="builder-controls">
-          <button id="addDash" class="secondary-btn" type="button">＋ ഡാഷ് ചേർക്കുക</button>
-          <button id="addWordSpace" class="secondary-btn" type="button">വാക്കിനിടയിൽ ഇടം</button>
-          <button id="undoAnswer" class="secondary-btn" type="button">അവസാന സ്ഥാനം നീക്കുക</button>
-          <button id="clearAnswer" class="text-btn" type="button">മായ്ക്കുക</button>
-        </div>
-        <label>മലയാളം അക്ഷരങ്ങളും ചിഹ്നങ്ങളും — വലിച്ചിട്ട് ഡാഷിൽ ചേർക്കുക</label>
-        <div id="creatorAlphabetTray" class="alphabet-tray creator-alphabet-tray"></div>
-        <label for="movieHint">സൂചന (ഐച്ഛികം)</label>
-        <input id="movieHint" maxlength="100" placeholder="ഉദാ. ഒരു പ്രണയകഥ">
+        <h3 class="builder-title">ടീം A — സിനിമയുടെ പേര് വരയ്ക്കുക</h3>
+        <p class="builder-help">ക്യാൻവാസിൽ മലയാളം സിനിമയുടെ പേര് കൈകൊണ്ട് എഴുതുക. “എഴുത്ത് തിരിച്ചറിയുക” അമർത്തുമ്പോൾ പരീക്ഷണാത്മക OCR അത് തിരിച്ചറിയാൻ ശ്രമിക്കും.</p>
+        <canvas id="answerCanvas" class="drawing-canvas answer-canvas" aria-label="സിനിമയുടെ പേര് വരയ്ക്കാനുള്ള പാഡ്"></canvas>
+        <div class="canvas-actions"><button id="recognizeAnswer" class="secondary-btn" type="button">✦ എഴുത്ത് തിരിച്ചറിയുക</button><button id="clearAnswerCanvas" class="text-btn" type="button">മായ്ക്കുക</button></div>
+        <p id="answerOcrStatus" class="ocr-status" role="status">മലയാളം എഴുത്ത് ഇവിടെ തിരിച്ചറിയാൻ ശ്രമിക്കും.</p>
+        <label for="movieAnswer">തിരിച്ചറിഞ്ഞ സിനിമയുടെ പേര് (ആവശ്യമെങ്കിൽ തിരുത്തുക)</label>
+        <input id="movieAnswer" maxlength="100" placeholder="തിരിച്ചറിഞ്ഞ പേര് ഇവിടെ വരും">
+        <label for="movieHint">സൂചന (ഐച്ഛികം)</label><input id="movieHint" maxlength="100" placeholder="ഉദാ. ഒരു പ്രണയകഥ">
+        <p class="small-note">മറു ടീമിന് സിനിമയുടെ പേര് കാണിക്കില്ല. അക്ഷരങ്ങളും ചിഹ്നങ്ങളും മാത്രമുള്ള സൂചന ഗെയിം സൃഷ്ടിക്കും.</p>
         <button id="submitPuzzle" class="primary-btn">ചോദ്യം തയ്യാറാക്കൂ →</button>
       </div>
       <div id="gameMessage" class="message" role="status"></div>
@@ -92,8 +90,8 @@
   <div id="toast" class="toast" role="status"></div>
   <dialog id="helpDialog">
     <div class="dialog-head"><h2>കളിക്കുന്ന വിധം</h2><button id="closeHelp" class="icon-btn">×</button></div>
-    <ol><li>ഒരു കളിക്കാരൻ സിനിമയുടെ പേര് മലയാളത്തിൽ നൽകുന്നു.</li><li>മറ്റേ ടീം അക്ഷരങ്ങൾ തിരഞ്ഞെടുക്കുകയോ ട്രേയിൽ നിന്ന് ബോർഡിലേക്ക് വലിച്ചിടുകയോ ചെയ്യുന്നു.</li><li>ശരിയായ അക്ഷരം സിനിമയുടെ പേരിൽ തുറക്കും.</li><li>അഞ്ച് തെറ്റായ ശ്രമങ്ങൾ കഴിഞ്ഞാൽ റൗണ്ട് അവസാനിക്കും.</li><li>ഓൺലൈൻ കളിക്ക് Firebase ക്രമീകരിച്ച് GitHub Pages-ൽ പ്രസിദ്ധീകരിക്കണം.</li></ol>
-    <p class="small-note">ശ്രദ്ധിക്കുക: മലയാളത്തിലെ കൂട്ടക്ഷരങ്ങളും ചിഹ്നങ്ങളും ബ്രൗസർ അക്ഷരങ്ങളായി കൈകാര്യം ചെയ്യുന്നത് വ്യത്യാസപ്പെടാം. ഈ പതിപ്പ് അടിസ്ഥാന അക്ഷര ഊഹിക്കലിനുള്ള തുടക്ക പതിപ്പാണ്.</p>
+    <ol><li>ചോദിക്കുന്ന ടീം പാഡിൽ മലയാളം സിനിമയുടെ പേര് വരയ്ക്കുന്നു; OCR അത് തിരിച്ചറിയാൻ ശ്രമിക്കും.</li><li>മറു ടീം ഓരോ ഒഴിഞ്ഞ ഡാഷിനും മലയാളം അക്ഷരം വരച്ച് ഊഹിക്കുന്നു.</li><li>ശരിയായ അക്ഷരം സിനിമയുടെ പേരിൽ തുറക്കും.</li><li>അഞ്ച് തെറ്റായ ശ്രമങ്ങൾ കഴിഞ്ഞാൽ റൗണ്ട് അവസാനിക്കും.</li><li>ഓൺലൈൻ കളിക്ക് Firebase ക്രമീകരിച്ച് GitHub Pages-ൽ പ്രസിദ്ധീകരിക്കണം.</li></ol>
+    <p class="small-note">ശ്രദ്ധിക്കുക: മലയാളം കൈയെഴുത്ത് OCR പരീക്ഷണാത്മകമാണ്; കൂട്ടക്ഷരങ്ങൾ, ചിഹ്നങ്ങൾ, മോശം കൈയെഴുത്ത് എന്നിവ തെറ്റായി തിരിച്ചറിയാം. ആവശ്യമെങ്കിൽ തിരിച്ചറിഞ്ഞ സിനിമയുടെ പേര് തിരുത്തുക.</p>
   </dialog>
   <footer>മലയാള സിനിമാപ്രേമികൾക്കായി ❤️ | സിനിമക്കളി</footer>
 
@@ -101,6 +99,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <script src="firebase-config.js"></script>
   <script src="app.js"></script>
 </body>
