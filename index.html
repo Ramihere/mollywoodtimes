@@ -73,11 +73,13 @@
       </div>
       <div id="creatorTools" class="creator-tools hidden">
         <h3 class="builder-title">ചോദ്യം തയ്യാറാക്കുന്ന ടീം — സിനിമയുടെ സൂചന വരയ്ക്കുക</h3>
-        <p class="builder-help">വലിയ പാഡിൽ ഡാഷുകളും ചിഹ്നങ്ങളും വരയ്ക്കൂ. മലയാളം കീബോർഡ് വേണ്ട: സിനിമയുടെ പേര് ഇംഗ്ലീഷ് അക്ഷരങ്ങളിൽ (ഉദാ. Manichitrathazhu) നൽകൂ. ഈ പേര് മറു ടീമിന് കാണിക്കില്ല. ശരിയായ അക്ഷരം ഉറപ്പായാൽ ടീം A മലയാളം അക്ഷരം പട്ടികയിൽ നിന്ന് തിരഞ്ഞെടുക്കും.</p>
+        <p class="builder-help">വലിയ പാഡിൽ ഡാഷുകളും ചിഹ്നങ്ങളും വരയ്ക്കൂ. മലയാളം കീബോർഡ് വേണ്ട — താഴെയുള്ള ഓൺ-സ്ക്രീൻ അക്ഷരങ്ങൾ അമർത്തി സിനിമയുടെ പേര് തയ്യാറാക്കൂ. ഈ ഉത്തരം മറു ടീമിന് കാണിക്കില്ല.</p>
         <canvas id="clueCanvas" class="drawing-canvas clue-canvas" width="900" height="240" aria-label="സിനിമയുടെ സൂചന വരയ്ക്കാനുള്ള പാഡ്"></canvas>
         <div class="canvas-actions"><button id="clearClueCanvas" class="secondary-btn" type="button">പാഡ് മായ്ക്കുക</button></div>
-        <label for="movieAnswer">സിനിമയുടെ പേര് (ഇംഗ്ലീഷ് അക്ഷരങ്ങളിൽ)</label>
-        <input id="movieAnswer" maxlength="100" placeholder="ഉദാ. Manichitrathazhu">
+        <label for="movieAnswer">സിനിമയുടെ പേര്</label>
+        <input id="movieAnswer" maxlength="100" placeholder="താഴെയുള്ള മലയാളം അക്ഷരങ്ങൾ അമർത്തൂ" readonly>
+        <div id="answerKeyboard" class="answer-keyboard" aria-label="മലയാളം അക്ഷരങ്ങൾ"></div>
+        <div class="canvas-actions"><button id="answerSpace" class="secondary-btn" type="button">വാക്കുകൾക്കിടയിൽ സ്പേസ്</button><button id="answerBackspace" class="secondary-btn" type="button">⌫ അവസാന അക്ഷരം നീക്കുക</button><button id="answerClear" class="secondary-btn" type="button">ഉത്തരം മായ്ക്കുക</button></div>
         <label for="movieHint">സൂചന (ഐച്ഛികം)</label><input id="movieHint" maxlength="100" placeholder="Optional hint in English">
         <p class="small-note">ഉത്തരം മറു ടീമിന് കാണിക്കില്ല. വരച്ച അക്ഷരം ശരിയെങ്കിൽ പച്ച ✓, തെറ്റെങ്കിൽ ചുവപ്പ് ✕ അമർത്തുക.</p>
         <button id="submitPuzzle" class="primary-btn">ചോദ്യം തയ്യാറാക്കൂ →</button>
