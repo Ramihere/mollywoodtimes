@@ -275,32 +275,26 @@
     if(!isHost||!roomData||!roomData.puzzle||roomData.finished)return;
     const answer=localHostAnswer;
     if(!answer){toast("ഹോസ്റ്റിന്റെ ബ്രൗസറിൽ ഉത്തരം ലഭ്യമല്ല. ചോദ്യം വീണ്ടും തയ്യാറാക്കൂ.");return;}
-    const answerSlots=Array.from(answer), maskSlots=Array.from(roomData.puzzle.mask||"");
-    const placements={...(roomData.placements||{})};
-    if(index===null) index=maskSlots.findIndex(slot=>slot==="_");
-    if(index<0||index>=answerSlots.length||maskSlots[index]!=="_")return;
-    const current=placements[index]||"";
-    if(current.includes(ch))return;
-    const target=answerSlots[index];
-    const correct=target.includes(ch);
-    const nextPlaced=correct?(current+ch).normalize("NFC"):current;
-    if(correct) placements[index]=nextPlaced;
+    const answerSlots=Array.from(answer);
+    const guesses={...(roomData.guesses||{})};
+    const key=String(ch).normalize("NFC");
+    if(guesses["letter:"+key]){toast("ഈ അക്ഷരം ഇതിനകം പരീക്ഷിച്ചു.");return;}
+    guesses["letter:"+key]=true;
+    const correct=answerSlots.includes(ch);
     const wrong=(roomData.wrong||0)+(correct?0:1);
-    const matchesSlot=(target,placed)=>{
-      const expected=[...target], actual=[...placed];
-      return expected.length===actual.length && expected.every(part=>actual.includes(part));
-    };
-    const slotComplete=answerSlots.map((target,i)=>/\s/u.test(target)||/[.,!?'":\-]/u.test(target)||matchesSlot(target,placements[i]||""));
-    const won=slotComplete.every(Boolean);
+    const oldMask=Array.from(roomData.puzzle.mask||"");
+    const revealedMask=answerSlots.map((target,i)=>{
+      if(/\s/u.test(target)||isMalayalamSign(target)||/[.,!?'":\\-]/u.test(target))return target;
+      return target===ch?target:(oldMask[i]==="_"?"_":oldMask[i]);
+    }).join("");
+    const won=!revealedMask.includes("_");
     const finished=won||wrong>=5;
     const winner=won?(1-roomData.puzzle.creatorTeam):roomData.puzzle.creatorTeam;
     const scores={...(roomData.scores||{0:0,1:0})};
     if(finished)scores[winner]=(scores[winner]||0)+1;
-    const revealedMask=answerSlots.map((target,i)=>/\s/u.test(target)||isMalayalamSign(target)||/[.,!?'":\-]/u.test(target)?target:(matchesSlot(target,placements[i]||"")?target:"_")).join("");
-    const patch={guesses:{...(roomData.guesses||{}),[String(index)+":"+ch]:true},placements,wrong,finished,winner,scores,puzzle:{...roomData.puzzle,mask:revealedMask}};
-    await updateRoom(patch);
-    if(!correct&&!finished)toast(`തെറ്റായ അക്ഷരം! ഇനി ${5-wrong} അവസരം.`);
-    if(correct&&!won)toast("ശരിയായ അക്ഷരം ചേർത്തു!");
+    await updateRoom({guesses,wrong,finished,winner,scores,puzzle:{...roomData.puzzle,mask:revealedMask}});
+    if(!correct&&!finished)toast("തെറ്റായ അക്ഷരം! ഇനി "+(5-wrong)+" അവസരം.");
+    if(correct&&!won)toast("ശരിയായ അക്ഷരം! എല്ലാ പൊരുത്തങ്ങളും തുറന്നു.");
     if(won)toast("ശരിയായ ഉത്തരം! 🎉");
     if(wrong>=5&&!won)toast("അഞ്ച് തെറ്റുകൾ! റൗണ്ട് അവസാനിച്ചു.");
   }
