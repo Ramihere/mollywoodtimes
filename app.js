@@ -1,8 +1,8 @@
 (() => {
   "use strict";
   const $ = (id) => document.getElementById(id);
-  const MALAYALAM = [..."അആഇഈഉഊഋഎഏഐഒഓഔകഖഗഘങചഛജഝഞടഠഡഢണതഥദധനപഫബഭമയരലവശഷസഹളഴറ"];
-  const SIGNS = [..."ാിീുൂൃെേൈൊോൌംഃ്ൺൻർൽൾൿ"];
+  const MALAYALAM = [..."അആഇഈഉഊഋൠഌൡഎഏഐഒഓഔകഖഗഘങചഛജഝഞടഠഡഢണതഥദധനപഫബഭമയരലവശഷസഹളഴറ"];
+  const SIGNS = [..."ാിീുൂൃൢൣെേൈൊോൌംഃ്ൺൻർൽൾൿ"];
   const ALPHABET = [...new Set([...MALAYALAM, ...SIGNS])];
   const $lobby = $("lobby"), $waiting = $("waiting"), $game = $("game");
   let selectedMode = "1v1", localMode = true, db = null, auth = null, uid = "local-"+Math.random().toString(36).slice(2);
@@ -40,7 +40,7 @@
   function roomCapacity() { return selectedMode==="2v2" ? 4 : 2; }
   function currentPlayers() { return roomData?.players ? Object.values(roomData.players) : localPlayers; }
   function myPlayer() { return currentPlayers().find(p=>p.uid===uid) || null; }
-  function isMyTurnToGuess() { const p=myPlayer(); return !!p && !!roomData?.puzzle && !roomData.finished && p.team !== roomData.puzzle.creatorTeam; }
+  function isMyTurnToGuess() { const p=myPlayer(); return !!p && !!roomData?.puzzle && !roomData.finished && (localMode || p.team !== roomData.puzzle.creatorTeam); }
   function renderPlayers() {
     const list=$("playersList"); list.innerHTML="";
     const players=currentPlayers(), max=roomData?.mode==="2v2"?4:2;
