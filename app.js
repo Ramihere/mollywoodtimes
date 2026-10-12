@@ -36,7 +36,7 @@
   function freshRoom(code, mode, host) {
     return { code, mode, hostUid:host.uid, hostName:host.name, status:"waiting", createdAt:Date.now(),
       players:{[host.uid]:{uid:host.uid,name:host.name,team:0,joinedAt:Date.now()}},
-      round:1, scores:{0:0,1:0}, puzzle:null, guesses:{}, wrong:0, finished:false, winner:null };
+      round:1, scores:{0:0,1:0}, puzzle:null, guesses:{}, drawings:{}, marks:{}, chat:[], wrong:0, finished:false, winner:null };
   }
   function roomCapacity() { return selectedMode==="2v2" ? 4 : 2; }
   function currentPlayers() { return roomData?.players ? Object.values(roomData.players) : localPlayers; }
@@ -289,7 +289,8 @@
   async function submitPuzzle() {
     if(!isHost||!roomData)return;
     const answer=normalize($("movieAnswer").value), hint=normalize($("movieHint").value);
-    if(!answer||!/[\u0D00-\u0D7F]/u.test(answer)){toast("സിനിമയുടെ പേര് വരച്ച് തിരിച്ചറിഞ്ഞ് ഉറപ്പാക്കൂ.");return;}
+    if(!answer||!/[\u0D00-\u0D7F]/u.test(answer)){toast("സിനിമയുടെ യഥാർത്ഥ പേര് മലയാളത്തിൽ നൽകൂ.");return;}
+    if(!clueHasInk){toast("ആദ്യം വലിയ പാഡിൽ ഡാഷുകളോ ചിഹ്നങ്ങളോ വരയ്ക്കൂ.");return;}
     if(graphemes(answer).filter(c=>! /\s/u.test(c)).length>50){toast("ചെറിയ സിനിമയുടെ പേര് പരീക്ഷിക്കൂ.");return;}
     const creatorTeam=myPlayer()?.team??0;
     localHostAnswer=answer;selectedGuessIndex=null;
