@@ -11,3 +11,5 @@
 .creator-alphabet-tray{grid-template-columns:repeat(9,minmax(0,1fr));max-height:220px;overflow:auto;padding:2px}
 .creator-alphabet-tray .letter-tile{min-height:42px}
 @media(max-width:760px){.creator-alphabet-tray{grid-template-columns:repeat(6,minmax(0,1fr))}.builder-chip{min-width:30px;min-height:38px}}
+
+.letter-slot.placed{color:var(--orange);border-color:var(--orange)} .letter-slot.drag-over{border-color:var(--mint);background:#1b2630}
