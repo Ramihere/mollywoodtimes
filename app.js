@@ -71,7 +71,7 @@
       } catch(e) { console.error(e); toast("ഓൺലൈൻ മുറി ഉണ്ടാക്കാനായില്ല. Firebase ക്രമീകരണം പരിശോധിക്കൂ."); return; }
     }
     localMode=true; isHost=true; roomCode=makeCode();
-    const host={uid,name:myName,team:0};
+    const host={uid:"local-host",name:myName,team:0};
     localPlayers=[host,{uid:"demo-guest",name:"സുഹൃത്ത് (ഡെമോ)",team:1}];
     localState=freshRoom(roomCode,selectedMode,host); localState.players={"local-host":host,"demo-guest":localPlayers[1]}; localState.hostUid="local-host"; uid="local-host";
     roomData=localState; $("roomCodeDisplay").innerHTML=`${roomCode} <span>▢</span>`; $("gameRoomCode").textContent=roomCode;
@@ -133,11 +133,19 @@
   }
   async function startGame() {
     if(!isHost){toast("ഹോസ്റ്റിന് മാത്രമേ കളി തുടങ്ങാനാകൂ.");return;}
+    if(!roomData){toast("മുറി തയ്യാറായിട്ടില്ല. വീണ്ടും ശ്രമിക്കൂ.");return;}
     const players=currentPlayers(), max=roomData.mode==="2v2"?4:2;
     if(players.length<max){toast("എല്ലാ കളിക്കാരും ചേരട്ടെ.");return;}
-    await updateRoom({status:"playing",round:1,scores:{0:0,1:0},puzzle:null,guesses:{},placements:{},wrong:0,finished:false,winner:null});
-    setScreen($game);
-    renderGame();
+    const button=$("startGame");button.disabled=true;
+    try{
+      await updateRoom({status:"playing",round:1,scores:{0:0,1:0},puzzle:null,guesses:{},placements:{},drawings:{},marks:{},chat:[],wrong:0,finished:false,winner:null});
+      setScreen($game);
+      renderGame();
+    }catch(e){
+      console.error("Unable to start game:",e);
+      toast("കളി തുടങ്ങാനായില്ല. Firebase rules / connection പരിശോധിക്കൂ.");
+      button.disabled=false;
+    }
   }
   function renderGame() {
     if(!roomData)return;
@@ -150,7 +158,6 @@
     $("roundTitle").textContent=roomData.finished?"റൗണ്ട് അവസാനിച്ചു":`റൗണ്ട് ${roomData.round||1}`;
     $("creatorTools").classList.toggle("hidden",!!puzzle||!isHost);
     $("guessDrawingTools").classList.toggle("hidden",!puzzle||!isMyTurnToGuess()||!!roomData.finished);
-    resizeDrawingPads();
     $("nextRound").classList.toggle("hidden",!roomData.finished||!isHost);
     $("hintBtn").disabled=!puzzle||!puzzle.hint||!isMyTurnToGuess();
     if(!puzzle){
