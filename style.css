@@ -59,3 +59,9 @@
 
 .retry-drawing{position:absolute;z-index:3;top:-10px;right:-10px;border:0;border-radius:50%;width:24px;height:24px;background:#eab308;color:#211b34;font-weight:900;cursor:pointer;box-shadow:0 1px 5px #0008}
 .chat-message{max-width:94%}
+
+.clue-canvas{height:180px;margin-top:12px;border:2px solid #8b78a8;background:#fff}
+.clue-drawing-view{margin:0 0 18px;border:1px solid #66527c;background:#211b34;border-radius:14px;padding:12px}
+.clue-drawing-view .board-label{margin-bottom:8px}
+.clue-drawing-view img{display:block;width:100%;max-height:190px;object-fit:contain;background:#fff;border-radius:9px}
+@media(max-width:760px){.clue-canvas{height:150px}}
