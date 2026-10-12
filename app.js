@@ -2,7 +2,7 @@
   "use strict";
   const $ = (id) => document.getElementById(id);
   const MALAYALAM = [..."അആഇഈഉഊഋൠഌൡഎഏഐഒഓഔകഖഗഘങചഛജഝഞടഠഡഢണതഥദധനപഫബഭമയരലവശഷസഹളഴറ"];
-  const SIGNS = [..."ാിീുൂൃൢൣെേൈൊോൌംഃ്ൺൻർൽൾൿ"];
+  const SIGNS = [..."ാിീുൂൃൄൢൣെേൈൊോൌംഃ്ൺൻർൽൾൿ"];
   const ALPHABET = [...new Set([...MALAYALAM, ...SIGNS])];
   const $lobby = $("lobby"), $waiting = $("waiting"), $game = $("game");
   let selectedMode = "1v1", localMode = true, db = null, auth = null, uid = "local-"+Math.random().toString(36).slice(2);
