@@ -29,7 +29,10 @@
           ".write": "auth != null && root.child('rooms').child($room).child('hostUid').val() === auth.uid"
         },
         "marks": {
-          ".write": "auth != null && root.child('rooms').child($room).child('hostUid').val() === auth.uid"
+          ".write": "auth != null && root.child('rooms').child($room).child('hostUid').val() === auth.uid",
+          "$index": {
+            ".write": "auth != null && (root.child('rooms').child($room).child('hostUid').val() === auth.uid || (!newData.exists() && data.val() === 'wrong' && root.child('rooms').child($room).child('drawings').child($index).child('by').val() === auth.uid))"
+          }
         },
         "wrong": {
           ".write": "auth != null && root.child('rooms').child($room).child('hostUid').val() === auth.uid"
@@ -48,7 +51,7 @@
         "drawings": {
           ".write": "auth != null && root.child('rooms').child($room).child('hostUid').val() === auth.uid",
           "$index": {
-            ".write": "auth != null && root.child('rooms').child($room).child('players').child(auth.uid).exists() && root.child('rooms').child($room).child('players').child(auth.uid).child('team').val() !== root.child('rooms').child($room).child('puzzle').child('creatorTeam').val()"
+            ".write": "auth != null && root.child('rooms').child($room).child('players').child(auth.uid).exists() && root.child('rooms').child($room).child('players').child(auth.uid).child('team').val() !== root.child('rooms').child($room).child('puzzle').child('creatorTeam').val() && ((newData.exists() && newData.child('by').val() === auth.uid) || (!newData.exists() && data.child('by').val() === auth.uid))"
           }
         },
         "chat": {
