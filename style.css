@@ -29,3 +29,30 @@
 .slot-draw-canvas{display:block;width:42px;height:50px;background:#fff;border:0;border-bottom:3px solid #655a83;border-radius:5px;touch-action:none;cursor:crosshair}
 .letter-slot.selected-slot .slot-draw-canvas{border-bottom-color:var(--mint);outline:2px solid var(--mint);outline-offset:1px}
 .letter-slot{padding:0}
+
+/* Side-by-side game board and live opponent chat */
+.game-columns{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;align-items:start;margin-top:16px}
+.game-main{min-width:0}
+.chat-panel{position:sticky;top:16px;display:flex;flex-direction:column;min-height:420px;max-height:620px;border:1px solid #4c3d65;background:#211b34;border-radius:16px;padding:14px}
+.chat-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;border-bottom:1px solid #4c3d65;padding-bottom:10px}
+.chat-heading h3{margin:0;font-size:1rem}.chat-heading p{margin:4px 0 0;font-size:.72rem;color:#b9adc9}
+.chat-live{font-size:.62rem;color:#9de4b0;white-space:nowrap}
+.chat-messages{flex:1;min-height:230px;overflow:auto;display:flex;flex-direction:column;gap:9px;padding:12px 0}
+.chat-empty{font-size:.8rem;color:#b9adc9;text-align:center;margin:auto}
+.chat-message{max-width:94%;align-self:flex-start;background:#342a49;border-radius:12px 12px 12px 3px;padding:8px 10px;overflow-wrap:anywhere}
+.chat-message.mine{align-self:flex-end;background:#3d315a;border-radius:12px 12px 3px 12px}
+.chat-meta{font-size:.64rem;color:#c3b4d9;margin-bottom:4px}.chat-message p{font-size:.83rem;line-height:1.45;margin:0;color:#fff;white-space:pre-wrap}
+.chat-form{display:flex;gap:6px;border-top:1px solid #4c3d65;padding-top:10px}
+.chat-form input{min-width:0;flex:1;padding:10px;font-size:.82rem}
+.chat-form .primary-btn{padding:9px 11px;font-size:.78rem}
+.submitted-drawing{width:52px;height:62px;object-fit:contain;background:#fff;border-radius:6px}
+.slot-mark{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:900;pointer-events:none}
+.correct-mark{color:#16a34a;text-shadow:0 1px 2px #fff,0 0 4px #fff}
+.wrong-mark{color:#dc2626;text-shadow:0 1px 2px #fff,0 0 4px #fff}
+.letter-slot{position:relative;overflow:visible}
+.judge-controls{position:absolute;z-index:2;bottom:-20px;left:50%;transform:translateX(-50%);display:flex;gap:4px}
+.judge-controls button{border:0;border-radius:50%;width:25px;height:25px;font-weight:900;color:#fff;cursor:pointer;box-shadow:0 1px 5px #0008}
+.judge-yes{background:#16a34a}.judge-no{background:#dc2626}
+.slot-draw-canvas{position:relative;z-index:1}
+@media(max-width:900px){.game-columns{grid-template-columns:minmax(0,1fr) 260px;gap:12px}}
+@media(max-width:700px){.game-columns{grid-template-columns:1fr}.chat-panel{position:static;min-height:280px;max-height:400px}.chat-messages{min-height:170px}}
