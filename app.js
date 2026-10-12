@@ -162,6 +162,9 @@
     $("roundTitle").textContent=roomData.finished?"റൗണ്ട് അവസാനിച്ചു":`റൗണ്ട് ${roomData.round||1}`;
     $("creatorTools").classList.toggle("hidden",!!puzzle||!isHost);
     $("guessDrawingTools").classList.toggle("hidden",!puzzle||!isMyTurnToGuess()||!!roomData.finished);
+    const clueView=$("clueDrawingView");
+    clueView.classList.toggle("hidden",!puzzle||!puzzle.clueDrawing);
+    if(puzzle?.clueDrawing)$("clueDrawingImage").src=puzzle.clueDrawing;
     $("nextRound").classList.toggle("hidden",!roomData.finished||!isHost);
     $("hintBtn").disabled=!puzzle||!puzzle.hint||!isMyTurnToGuess();
     if(!puzzle){
@@ -290,7 +293,8 @@
     if(graphemes(answer).filter(c=>! /\s/u.test(c)).length>50){toast("ചെറിയ സിനിമയുടെ പേര് പരീക്ഷിക്കൂ.");return;}
     const creatorTeam=myPlayer()?.team??0;
     localHostAnswer=answer;selectedGuessIndex=null;
-    const puzzle={creatorTeam,mask:Array.from(answer).map(c=>/\s/u.test(c)||isMalayalamSign(c)||/[.,!?'"():\\-]/u.test(c)?c:"_").join(""),hint:hint||""};
+    const clueDrawing=$("clueCanvas").toDataURL("image/jpeg",0.72);
+    const puzzle={creatorTeam,mask:Array.from(answer).map(c=>/\s/u.test(c)||isMalayalamSign(c)||/[.,!?'"():\\-]/u.test(c)?c:"_").join(""),hint:hint||"",clueDrawing};
     if(localMode){localState.puzzle=puzzle;localState.guesses={};localState.placements={};localState.drawings={};localState.marks={};localState.chat=[];localState.wrong=0;localState.finished=false;localState.winner=null;roomData=localState;renderGame();renderChat([]);}
     else {
       await roomRef.update({puzzle,guesses:{},placements:{},drawings:{},marks:{},chat:[],wrong:0,finished:false,winner:null});
@@ -369,6 +373,28 @@
   $("roomCode").addEventListener("input",e=>e.target.value=e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,""));
   $("helpBtn").addEventListener("click",()=>$("helpDialog").showModal()); $("closeHelp").addEventListener("click",()=>$("helpDialog").close());
 
+  // Team A draws a public clue made of dashes and symbols; it is not OCR-processed.
+  let clueHasInk=false;
+  function initClueCanvas(){
+    const canvas=$("clueCanvas");if(!canvas)return;
+    const ctx=canvas.getContext("2d");
+    const clear=()=>{ctx.fillStyle="#fff";ctx.fillRect(0,0,canvas.width,canvas.height);};
+    clear();
+    let drawing=false,last=null;
+    canvas.addEventListener("pointerdown",e=>{
+      e.preventDefault();canvas.setPointerCapture(e.pointerId);drawing=true;clueHasInk=true;
+      const r=canvas.getBoundingClientRect();last={x:(e.clientX-r.left)*canvas.width/r.width,y:(e.clientY-r.top)*canvas.height/r.height};
+      ctx.beginPath();ctx.arc(last.x,last.y,3,0,Math.PI*2);ctx.fillStyle="#20172d";ctx.fill();
+    });
+    canvas.addEventListener("pointermove",e=>{
+      if(!drawing)return;e.preventDefault();
+      const r=canvas.getBoundingClientRect(),p={x:(e.clientX-r.left)*canvas.width/r.width,y:(e.clientY-r.top)*canvas.height/r.height};
+      ctx.beginPath();ctx.moveTo(last.x,last.y);ctx.lineTo(p.x,p.y);ctx.strokeStyle="#20172d";ctx.lineWidth=7;ctx.lineCap="round";ctx.lineJoin="round";ctx.stroke();last=p;
+    });
+    const stop=()=>{drawing=false;last=null;};canvas.addEventListener("pointerup",stop);canvas.addEventListener("pointercancel",stop);
+    $("clearClueCanvas").addEventListener("click",()=>{clear();clueHasInk=false;});
+  }
+  initClueCanvas();
   // Draw directly into each blank; no automatic handwriting recognition.
   function initSlotCanvas(canvas){
     const ctx=canvas.getContext("2d");ctx.fillStyle="#fff";ctx.fillRect(0,0,canvas.width,canvas.height);
