@@ -146,7 +146,7 @@
     $("nextRound").classList.toggle("hidden",!roomData.finished||!isHost);
     $("hintBtn").disabled=!puzzle||!puzzle.hint||!isMyTurnToGuess();
     if(!puzzle){
-      $("turnBanner").textContent=isHost?"നിങ്ങളുടെ ടീം സിനിമയുടെ പേര് വരയ്ക്കൂ.":"ഹോസ്റ്റ് ചോദ്യം തയ്യാറാക്കുകയാണ്…";
+      $("turnBanner").textContent=isHost?"നിങ്ങളുടെ ടീം സിനിമയുടെ പേര് നൽകൂ.":"ഹോസ്റ്റ് ചോദ്യം തയ്യാറാക്കുകയാണ്…";
       $("wordSlots").innerHTML="";
       say("gameMessage",isHost?"മലയാളത്തിൽ സിനിമയുടെ പേര് നൽകൂ. ഉത്തരം മറച്ചുവെക്കും.":"ചോദ്യം വരുന്നതുവരെ കാത്തിരിക്കൂ.");
       return;
@@ -171,8 +171,10 @@
         if(revealed){span.textContent=ch;}
         else if(drawing){
           const img=document.createElement("img");img.className="submitted-drawing";img.alt="കളിക്കാരൻ വരച്ച അക്ഷരം";img.src=drawing.dataUrl;span.appendChild(img);
-          if(mark==="correct"){const tick=document.createElement("span");tick.className="slot-mark correct-mark";tick.textContent="✓";tick.title="ശരി";span.appendChild(tick);}
-          if(mark==="wrong"){const cross=document.createElement("span");cross.className="slot-mark wrong-mark";cross.textContent="✕";cross.title="തെറ്റ്";span.appendChild(cross);}
+          if(mark==="wrong"&&isMyTurnToGuess()&&!roomData.finished){
+            const retry=document.createElement("button");retry.type="button";retry.className="retry-drawing";retry.textContent="↻";retry.title="വീണ്ടും വരയ്ക്കുക";
+            retry.addEventListener("click",e=>{e.stopPropagation();resetDrawing(slotIndex);});span.appendChild(retry);
+          }
           if(isHost&&!roomData.finished&&!mark){
             const controls=document.createElement("div");controls.className="judge-controls";
             const yes=document.createElement("button");yes.type="button";yes.className="judge-yes";yes.textContent="✓";yes.title="അക്ഷരം ശരി";yes.addEventListener("click",e=>{e.stopPropagation();judgeDrawing(slotIndex,true);});
@@ -185,6 +187,13 @@
           span.appendChild(pad);initSlotCanvas(pad);
         } else {span.textContent=placed||"—";}
 
+      }
+      if(marks[index]==="correct"||marks[index]==="wrong"){
+        const markNode=document.createElement("span");
+        markNode.className="slot-mark "+(marks[index]==="correct"?"correct-mark":"wrong-mark");
+        markNode.textContent=marks[index]==="correct"?"✓":"✕";
+        markNode.title=marks[index]==="correct"?"ശരി":"തെറ്റ്";
+        span.appendChild(markNode);
       }
       slots.appendChild(span);
     }
@@ -263,9 +272,9 @@
     const creatorTeam=myPlayer()?.team??0;
     localHostAnswer=answer;selectedGuessIndex=null;
     const puzzle={creatorTeam,mask:Array.from(answer).map(c=>/\s/u.test(c)||isMalayalamSign(c)||/[.,!?'"():\\-]/u.test(c)?c:"_").join(""),hint:hint||""};
-    if(localMode){localState.puzzle=puzzle;localState.guesses={};localState.placements={};localState.drawings={};localState.marks={};localState.wrong=0;localState.finished=false;localState.winner=null;roomData=localState;renderGame();}
+    if(localMode){localState.puzzle=puzzle;localState.guesses={};localState.placements={};localState.drawings={};localState.marks={};localState.chat=[];localState.wrong=0;localState.finished=false;localState.winner=null;roomData=localState;renderGame();renderChat([]);}
     else {
-      await roomRef.update({puzzle,guesses:{},placements:{},drawings:{},marks:{},wrong:0,finished:false,winner:null});
+      await roomRef.update({puzzle,guesses:{},placements:{},drawings:{},marks:{},chat:[],wrong:0,finished:false,winner:null});
       await db.ref("roomSecrets/"+roomCode).set({answer,hint});
     }
     $("movieAnswer").value="";$("movieHint").value="";
@@ -284,6 +293,13 @@
       else {await roomRef.child("drawings/"+index).set(drawing);}
       say("guessDrawingStatus","വരച്ച അക്ഷരം അയച്ചു. ടീം പരിശോധിക്കുന്നതിനായി കാത്തിരിക്കൂ.");
     } catch(e){console.error(e);toast("വരച്ച അക്ഷരം അയയ്ക്കാനായില്ല.");}
+  }
+  async function resetDrawing(index){
+    if(!isMyTurnToGuess()||roomData.finished)return;
+    const drawings={...(roomData.drawings||{})}, marks={...(roomData.marks||{})};
+    delete drawings[index];delete marks[index];
+    if(localMode){localState.drawings=drawings;localState.marks=marks;roomData=localState;renderGame();}
+    else {await roomRef.update({drawings,marks});}
   }
   async function judgeDrawing(index,correct) {
     if(!isHost||!roomData?.puzzle||roomData.finished)return;
@@ -314,7 +330,7 @@
   async function nextRound() {
     if(!isHost)return;
     const next=(roomData.round||1)+1;
-    await updateRoom({round:next,puzzle:null,guesses:{},placements:{},drawings:{},marks:{},wrong:0,finished:false,winner:null});
+    await updateRoom({round:next,puzzle:null,guesses:{},placements:{},drawings:{},marks:{},chat:[],wrong:0,finished:false,winner:null});
     if(!localMode)await db.ref("roomSecrets/"+roomCode).set({answer:"",hint:""});
     localHostAnswer="";
   }
