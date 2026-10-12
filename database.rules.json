@@ -51,7 +51,7 @@
         "drawings": {
           ".write": "auth != null && root.child('rooms').child($room).child('hostUid').val() === auth.uid",
           "$index": {
-            ".write": "auth != null && root.child('rooms').child($room).child('players').child(auth.uid).exists() && root.child('rooms').child($room).child('players').child(auth.uid).child('team').val() !== root.child('rooms').child($room).child('puzzle').child('creatorTeam').val() && ((newData.exists() && newData.child('by').val() === auth.uid) || (!newData.exists() && data.child('by').val() === auth.uid))"
+            ".write": "auth != null && root.child('rooms').child($room).child('players').child(auth.uid).exists() && root.child('rooms').child($room).child('players').child(auth.uid).child('team').val() !== root.child('rooms').child($room).child('puzzle').child('creatorTeam').val() && ((newData.exists() && newData.child('by').val() === auth.uid && (!data.exists() || data.child('by').val() === auth.uid)) || (!newData.exists() && data.child('by').val() === auth.uid))"
           }
         },
         "chat": {
