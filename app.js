@@ -180,7 +180,7 @@
       b.textContent=ch;b.draggable=isMyTurnToGuess()&&!roomData.finished;
       b.disabled=!isMyTurnToGuess()||roomData.finished;
       b.setAttribute("aria-label",`അക്ഷരം ${ch}`);
-      b.addEventListener("click",()=>guessLetter(ch,null));
+      b.addEventListener("click",()=>toast("അക്ഷരം ഡാഷിലേക്ക് വലിച്ചിടൂ."));
       b.addEventListener("dragstart",e=>{e.dataTransfer.setData("text/plain",ch);e.dataTransfer.effectAllowed="copy";});
       tray.appendChild(b);
     });
