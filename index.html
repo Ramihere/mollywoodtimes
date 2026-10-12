@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ml">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#171329">
+  <title>സിനിമക്കളി — മലയാളം മൂവി ഗെയിം</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Malayalam:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./"><span class="brand-mark">സ</span><span>സിനിമക്കളി<small>മലയാളം മൂവി ചലഞ്ച്</small></span></a>
+    <div class="top-actions"><span id="connectionBadge" class="status-pill">ഡെമോ മോഡ്</span><button id="helpBtn" class="icon-btn" aria-label="സഹായം">?</button></div>
+  </header>
+
+  <main>
+    <section id="lobby" class="panel lobby">
+      <div class="hero">
+        <span class="eyebrow">🎬 സിനിമ അറിയാമോ?</span>
+        <h1>അക്ഷരങ്ങൾ ചേർക്കൂ.<br><span>സിനിമ കണ്ടെത്തൂ!</span></h1>
+        <p>മലയാളം അക്ഷരങ്ങൾ വലിച്ചിടൂ, സിനിമയുടെ പേര് ഊഹിക്കൂ. അഞ്ച് തെറ്റുകൾ മാത്രം!</p>
+        <div class="hero-badges"><span>👥 1 vs 1</span><span>🤝 2 vs 2</span><span>🔤 മലയാളത്തിൽ മാത്രം</span></div>
+      </div>
+      <div class="lobby-card">
+        <label for="playerName">നിങ്ങളുടെ പേര്</label>
+        <input id="playerName" maxlength="18" placeholder="പേര് എഴുതൂ" value="">
+        <label>കളിയുടെ രീതി</label>
+        <div class="mode-options">
+          <button class="mode-choice selected" data-mode="1v1"><b>⚔️ 1 vs 1</b><small>രണ്ട് കളിക്കാർ</small></button>
+          <button class="mode-choice" data-mode="2v2"><b>🛡️ 2 vs 2</b><small>നാല് കളിക്കാർ</small></button>
+        </div>
+        <button id="createRoom" class="primary-btn">പുതിയ മുറി തുടങ്ങാം <span>→</span></button>
+        <div class="or-line"><span>അല്ലെങ്കിൽ</span></div>
+        <label for="roomCode">മുറിയുടെ കോഡ്</label>
+        <div class="join-row"><input id="roomCode" maxlength="6" placeholder="ഉദാ. K7M2Q" autocapitalize="characters"><button id="joinRoom" class="secondary-btn">ചേരാം</button></div>
+        <p id="lobbyMessage" class="message" role="status"></p>
+        <p class="small-note">Firebase ക്രമീകരിച്ചിട്ടില്ലെങ്കിൽ ഈ ബ്രൗസറിൽ ഡെമോ കളിക്കാം. ഓൺലൈൻ മൾട്ടിപ്ലെയറിന് README കാണുക.</p>
+      </div>
+    </section>
+
+    <section id="waiting" class="panel waiting hidden">
+      <div class="section-head"><span class="eyebrow">🎟️ മുറി തയ്യാറാണ്</span><h2>സുഹൃത്തുക്കളെ വിളിക്കൂ</h2><p>ഈ കോഡ് പങ്കിടൂ. എല്ലാവരും ചേർന്നാൽ കളി തുടങ്ങാം.</p></div>
+      <button id="roomCodeDisplay" class="room-code" title="കോഡ് പകർത്താൻ">------ <span>▢</span></button>
+      <div id="playersList" class="players-list"></div>
+      <p id="waitingMessage" class="message">കളിക്കാർ ചേരുന്നതിനായി കാത്തിരിക്കുന്നു…</p>
+      <div class="waiting-actions"><button id="startGame" class="primary-btn">കളി തുടങ്ങാം →</button><button id="leaveWaiting" class="text-btn">പുറത്തുകടക്കുക</button></div>
+    </section>
+
+    <section id="game" class="panel game hidden">
+      <div class="game-top">
+        <div><span class="eyebrow">മുറി <b id="gameRoomCode">------</b></span><h2 id="roundTitle">ആദ്യ റൗണ്ട്</h2></div>
+        <div class="round-pill">റൗണ്ട് <b id="roundNumber">1</b></div>
+      </div>
+      <div class="scoreboard">
+        <div class="team-score" id="team0Card"><span class="team-dot team-a"></span><div><small>ടീം A</small><b id="score0">0</b></div><span id="team0Names" class="team-names">കളിക്കാർ</span></div>
+        <div class="score-divider">VS</div>
+        <div class="team-score" id="team1Card"><span class="team-dot team-b"></span><div><small>ടീം B</small><b id="score1">0</b></div><span id="team1Names" class="team-names">കളിക്കാർ</span></div>
+      </div>
+      <div id="turnBanner" class="turn-banner">ടേൺ വിവരങ്ങൾ ഇവിടെ കാണാം</div>
+      <div class="movie-board">
+        <div class="board-label"><span>🎞️ സിനിമയുടെ പേര്</span><span id="mistakesLabel">തെറ്റുകൾ <b>0</b>/5</span></div>
+        <div id="wordSlots" class="word-slots" aria-label="സിനിമയുടെ പേരിലെ അക്ഷരങ്ങൾ"></div>
+        <p id="boardHint" class="board-hint">ശരിയായ അക്ഷരങ്ങൾ കണ്ടെത്തൂ!</p>
+      </div>
+      <div class="alphabet-section">
+        <div class="alphabet-head"><div><h3>മലയാളം അക്ഷരങ്ങൾ</h3><p>ഒരു അക്ഷരം തിരഞ്ഞെടുക്കൂ അല്ലെങ്കിൽ വലിച്ചിടൂ</p></div><span id="alphabetCount" class="count-pill">അക്ഷരങ്ങൾ</span></div>
+        <div id="alphabetTray" class="alphabet-tray"></div>
+      </div>
+      <div id="creatorTools" class="creator-tools hidden">
+        <label for="movieAnswer">സിനിമയുടെ പേര് (മലയാളത്തിൽ)</label>
+        <input id="movieAnswer" maxlength="50" placeholder="ഉദാ. പ്രേമം">
+        <label for="movieHint">സൂചന (ഐച്ഛികം)</label>
+        <input id="movieHint" maxlength="100" placeholder="ഉദാ. ഒരു പ്രണയകഥ">
+        <button id="submitPuzzle" class="primary-btn">ചോദ്യം തയ്യാറാക്കൂ →</button>
+      </div>
+      <div id="gameMessage" class="message" role="status"></div>
+      <div class="game-actions"><button id="hintBtn" class="secondary-btn">💡 സൂചന</button><button id="nextRound" class="primary-btn hidden">അടുത്ത റൗണ്ട് →</button><button id="backToLobby" class="text-btn">മുറി വിടുക</button></div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status"></div>
+  <dialog id="helpDialog">
+    <div class="dialog-head"><h2>കളിക്കുന്ന വിധം</h2><button id="closeHelp" class="icon-btn">×</button></div>
+    <ol><li>ഒരു കളിക്കാരൻ സിനിമയുടെ പേര് മലയാളത്തിൽ നൽകുന്നു.</li><li>മറ്റേ ടീം അക്ഷരങ്ങൾ തിരഞ്ഞെടുക്കുകയോ ട്രേയിൽ നിന്ന് ബോർഡിലേക്ക് വലിച്ചിടുകയോ ചെയ്യുന്നു.</li><li>ശരിയായ അക്ഷരം സിനിമയുടെ പേരിൽ തുറക്കും.</li><li>അഞ്ച് തെറ്റായ ശ്രമങ്ങൾ കഴിഞ്ഞാൽ റൗണ്ട് അവസാനിക്കും.</li><li>ഓൺലൈൻ കളിക്ക് Firebase ക്രമീകരിച്ച് GitHub Pages-ൽ പ്രസിദ്ധീകരിക്കണം.</li></ol>
+    <p class="small-note">ശ്രദ്ധിക്കുക: മലയാളത്തിലെ കൂട്ടക്ഷരങ്ങളും ചിഹ്നങ്ങളും ബ്രൗസർ അക്ഷരങ്ങളായി കൈകാര്യം ചെയ്യുന്നത് വ്യത്യാസപ്പെടാം. ഈ പതിപ്പ് അടിസ്ഥാന അക്ഷര ഊഹിക്കലിനുള്ള തുടക്ക പതിപ്പാണ്.</p>
+  </dialog>
+  <footer>മലയാള സിനിമാപ്രേമികൾക്കായി ❤️ | സിനിമക്കളി</footer>
+
+  <!-- Firebase SDKs. The app falls back to local demo mode when not configured. -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

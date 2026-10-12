@@ -1,0 +1,16 @@
+{
+  "rules": {
+    "rooms": {
+      "$room": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
+    "roomSecrets": {
+      "$room": {
+        ".read": "auth != null && root.child('rooms').child($room).child('hostUid').val() === auth.uid",
+        ".write": "auth != null && root.child('rooms').child($room).child('hostUid').val() === auth.uid"
+      }
+    }
+  }
+}
