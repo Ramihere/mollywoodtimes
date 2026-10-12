@@ -72,13 +72,13 @@
         <p id="guessDrawingStatus" class="ocr-status" role="status">ഒരു ഡാഷിൽ മലയാളം അക്ഷരം വരച്ച് അയയ്ക്കൂ.</p>
       </div>
       <div id="creatorTools" class="creator-tools hidden">
-        <h3 class="builder-title">ചോദ്യം തയ്യാറാക്കുന്ന ടീം — സിനിമയുടെ പേര് നൽകുക</h3>
-        <p class="builder-help">വലിയ പാഡിൽ ഡാഷുകളും ചിഹ്നങ്ങളും വരച്ച് ടീമിന് സൂചന നൽകൂ. ശരിയായ അക്ഷരങ്ങൾ പരിശോധിക്കാൻ സിനിമയുടെ യഥാർത്ഥ പേര് താഴെ നൽകുക; അത് മറു ടീമിന് കാണിക്കില്ല.</p>
+        <h3 class="builder-title">ചോദ്യം തയ്യാറാക്കുന്ന ടീം — സിനിമയുടെ സൂചന വരയ്ക്കുക</h3>
+        <p class="builder-help">വലിയ പാഡിൽ ഡാഷുകളും ചിഹ്നങ്ങളും വരയ്ക്കൂ. മലയാളം കീബോർഡ് വേണ്ട: സിനിമയുടെ പേര് ഇംഗ്ലീഷ് അക്ഷരങ്ങളിൽ (ഉദാ. Manichitrathazhu) നൽകൂ. ഈ പേര് മറു ടീമിന് കാണിക്കില്ല. ശരിയായ അക്ഷരം ഉറപ്പായാൽ ടീം A മലയാളം അക്ഷരം പട്ടികയിൽ നിന്ന് തിരഞ്ഞെടുക്കും.</p>
         <canvas id="clueCanvas" class="drawing-canvas clue-canvas" width="900" height="240" aria-label="സിനിമയുടെ സൂചന വരയ്ക്കാനുള്ള പാഡ്"></canvas>
         <div class="canvas-actions"><button id="clearClueCanvas" class="secondary-btn" type="button">പാഡ് മായ്ക്കുക</button></div>
-        <label for="movieAnswer">സിനിമയുടെ പേര് (മലയാളത്തിൽ)</label>
-        <input id="movieAnswer" maxlength="100" placeholder="ഉദാ. മലയാളം സിനിമയുടെ പേര്">
-        <label for="movieHint">സൂചന (ഐച്ഛികം)</label><input id="movieHint" maxlength="100" placeholder="ഉദാ. ഒരു പ്രണയകഥ">
+        <label for="movieAnswer">സിനിമയുടെ പേര് (ഇംഗ്ലീഷ് അക്ഷരങ്ങളിൽ)</label>
+        <input id="movieAnswer" maxlength="100" placeholder="ഉദാ. Manichitrathazhu">
+        <label for="movieHint">സൂചന (ഐച്ഛികം)</label><input id="movieHint" maxlength="100" placeholder="Optional hint in English">
         <p class="small-note">ഉത്തരം മറു ടീമിന് കാണിക്കില്ല. വരച്ച അക്ഷരം ശരിയെങ്കിൽ പച്ച ✓, തെറ്റെങ്കിൽ ചുവപ്പ് ✕ അമർത്തുക.</p>
         <button id="submitPuzzle" class="primary-btn">ചോദ്യം തയ്യാറാക്കൂ →</button>
       </div>
@@ -103,6 +103,7 @@
     <ol><li>ചോദ്യം തയ്യാറാക്കുന്ന ടീം സിനിമയുടെ പേര് നൽകുന്നു; അത് മറച്ചുവെക്കും.</li><li>മറ്റേ ടീം ഓരോ ഒഴിഞ്ഞ സ്ഥാനത്തും അക്ഷരം വരച്ച് അയക്കും.</li><li>ചോദ്യം തയ്യാറാക്കിയ ടീം പച്ച ✓ അമർത്തി ശരിയാണെന്നും ചുവപ്പ് ✕ അമർത്തി തെറ്റാണെന്നും അറിയിക്കും. ചാറ്റും ഉപയോഗിക്കാം.</li><li>അഞ്ച് തെറ്റായ ശ്രമങ്ങൾ കഴിഞ്ഞാൽ റൗണ്ട് അവസാനിക്കും.</li><li>ഓൺലൈൻ കളിക്ക് Firebase ക്രമീകരിച്ച് GitHub Pages-ൽ പ്രസിദ്ധീകരിക്കണം.</li></ol>
     <p class="small-note">അക്ഷരങ്ങൾ സ്വയം തിരിച്ചറിയില്ല; ചോദ്യം തയ്യാറാക്കിയ ടീം ഓരോ വരച്ച അക്ഷരവും പരിശോധിക്കും.</p>
   </dialog>
+  <dialog id="letterPickerDialog"><div class="dialog-head"><h2>ശരിയായ മലയാളം അക്ഷരം തിരഞ്ഞെടുക്കൂ</h2><button id="closeLetterPicker" class="icon-btn" type="button">×</button></div><p class="small-note">ടീം B വരച്ച അക്ഷരം ശരിയാണെന്ന് ഉറപ്പാക്കിയ ശേഷം മാത്രം തിരഞ്ഞെടുക്കുക.</p><div id="letterPickerGrid" class="letter-picker-grid"></div></dialog>
   <footer>മലയാള സിനിമാപ്രേമികൾക്കായി ❤️ | സിനിമക്കളി</footer>
 
   <!-- Firebase SDKs. The app falls back to local demo mode when not configured. -->
