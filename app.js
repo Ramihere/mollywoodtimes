@@ -150,7 +150,7 @@
       return;
     }
     const creatorTeam=puzzle.creatorTeam, guessingTeam=1-creatorTeam;
-    $("turnBanner").textContent=p?.team===creatorTeam?"നിങ്ങളുടെ ടീമാണ് ചോദ്യം ഒരുക്കിയത്. മറുവശം ഊഹിക്കട്ടെ.":`ടീം ${guessingTeam===0?"A":"B"} ഊഹിക്കുന്നു — അക്ഷരങ്ങൾ തിരഞ്ഞെടുക്കൂ!`;
+    $("turnBanner").textContent=p?.team===creatorTeam?"നിങ്ങളുടെ ടീമാണ് ചോദ്യം ഒരുക്കിയത്. മറുവശം ഊഹിക്കട്ടെ.":`ടീം ${guessingTeam===0?"A":"B"} ഊഹിക്കുന്നു — ഡാഷിൽ നേരിട്ട് അക്ഷരം വരയ്ക്കൂ!`;
     $("mistakesLabel").innerHTML=`തെറ്റുകൾ <b>${roomData.wrong||0}</b>/5`;
     const placements=roomData.placements||{};
     // The full answer is never rendered to non-host clients.
@@ -165,7 +165,13 @@
         const revealed=ch!=="_", placed=placements[index]||"";
         span.className="letter-slot"+(revealed?" revealed":placed?" placed":"")+(slotIndex===selectedGuessIndex?" selected-slot":"");
         span.textContent=revealed?ch:placed;
-        if(!revealed && isMyTurnToGuess() && !roomData.finished) span.addEventListener("click",()=>{selectedGuessIndex=slotIndex;renderGame();});
+        if(!revealed && isMyTurnToGuess() && !roomData.finished) {
+          span.addEventListener("click",()=>{selectedGuessIndex=slotIndex;renderGame();});
+          if(!placed){
+            const pad=document.createElement("canvas");pad.className="slot-draw-canvas";pad.width=84;pad.height=100;pad.dataset.index=String(slotIndex);pad.setAttribute("aria-label",`സ്ഥാനം ${slotIndex+1}-ൽ അക്ഷരം വരയ്ക്കുക`);
+            span.textContent="";span.appendChild(pad);initSlotCanvas(pad);
+          }
+        }
       }
       slots.appendChild(span);
     }
@@ -344,17 +350,26 @@
     canvas.addEventListener("pointermove",e=>{if(!drawing)return;e.preventDefault();const r=canvas.getBoundingClientRect(),p={x:e.clientX-r.left,y:e.clientY-r.top};ctx.beginPath();ctx.moveTo(last.x,last.y);ctx.lineTo(p.x,p.y);ctx.stroke();last=p;});
     const stop=()=>{drawing=false;last=null;};canvas.addEventListener("pointerup",stop);canvas.addEventListener("pointercancel",stop);
   }
+
+  function initSlotCanvas(canvas){
+    const ctx=canvas.getContext("2d");ctx.fillStyle="#fff";ctx.fillRect(0,0,canvas.width,canvas.height);
+    let drawing=false,last=null;
+    canvas.addEventListener("pointerdown",e=>{e.preventDefault();e.stopPropagation();selectedGuessIndex=Number(canvas.dataset.index);canvas.setPointerCapture(e.pointerId);drawing=true;const r=canvas.getBoundingClientRect();last={x:(e.clientX-r.left)*canvas.width/r.width,y:(e.clientY-r.top)*canvas.height/r.height};ctx.beginPath();ctx.arc(last.x,last.y,3,0,Math.PI*2);ctx.fillStyle="#20172d";ctx.fill();});
+    canvas.addEventListener("pointermove",e=>{if(!drawing)return;e.preventDefault();e.stopPropagation();const r=canvas.getBoundingClientRect(),p={x:(e.clientX-r.left)*canvas.width/r.width,y:(e.clientY-r.top)*canvas.height/r.height};ctx.beginPath();ctx.moveTo(last.x,last.y);ctx.lineTo(p.x,p.y);ctx.strokeStyle="#20172d";ctx.lineWidth=6;ctx.lineCap="round";ctx.lineJoin="round";ctx.stroke();last=p;});
+    const stop=()=>{drawing=false;last=null;};canvas.addEventListener("pointerup",stop);canvas.addEventListener("pointercancel",stop);
+  }
+
   function resizeDrawingPads(){Object.values(canvasContexts).forEach(x=>x.resize?.());}
   function clearCanvas(id){
     const canvas=$(id),entry=canvasContexts[id];if(!canvas||!entry)return;
     const ctx=entry.ctx,ratio=Math.max(1,window.devicePixelRatio||1),w=canvas.clientWidth||canvas.width/ratio,h=canvas.classList.contains("answer-canvas")?250:220;
     ctx.save();ctx.setTransform(ratio,0,0,ratio,0,0);ctx.fillStyle="#fff";ctx.fillRect(0,0,w,h);ctx.restore();
   }
-  async function recognizeCanvas(id,statusId){
+  async function recognizeCanvas(source,statusId){
     if(!window.Tesseract){say(statusId,"OCR ലൈബ്രറി ലോഡ് ആയില്ല. ഇന്റർനെറ്റ് കണക്ഷൻ പരിശോധിക്കൂ.");return "";}
     say(statusId,"മലയാളം എഴുത്ത് തിരിച്ചറിയാൻ ശ്രമിക്കുന്നു…");
     try{
-      const result=await Tesseract.recognize($(id),"mal",{logger:m=>{if(m.status==="recognizing text")say(statusId,"തിരിച്ചറിയുന്നു… "+Math.round((m.progress||0)*100)+"%");}});
+      const result=await Tesseract.recognize(typeof source==="string"?$(source):source,"mal",{logger:m=>{if(m.status==="recognizing text")say(statusId,"തിരിച്ചറിയുന്നു… "+Math.round((m.progress||0)*100)+"%");}});
       const text=normalize(result.data.text).replace(/[^\u0D00-\u0D7F\s]/gu,"").replace(/\s+/g," ").trim();
       say(statusId,text?"തിരിച്ചറിഞ്ഞത്: "+text+" (വിശ്വാസനില "+Math.round(result.data.confidence||0)+"%)":"തിരിച്ചറിയാൻ കഴിഞ്ഞില്ല. കൂടുതൽ വ്യക്തമായി വീണ്ടും വരയ്ക്കൂ.");
       return text;
@@ -364,18 +379,19 @@
     const text=await recognizeCanvas("answerCanvas","answerOcrStatus");if(text)$("movieAnswer").value=text;
   });
   $("clearAnswerCanvas").addEventListener("click",()=>{clearCanvas("answerCanvas");$("movieAnswer").value="";say("answerOcrStatus","പുതിയതായി വരയ്ക്കാം.");});
-  $("clearGuessCanvas").addEventListener("click",()=>{clearCanvas("guessCanvas");say("guessOcrStatus","ഒരു അക്ഷരം വ്യക്തമായി വരയ്ക്കുക.");});
+  $("clearGuessCanvas").addEventListener("click",()=>{const pad=document.querySelector(`.slot-draw-canvas[data-index="${selectedGuessIndex}"]`);if(pad){const ctx=pad.getContext("2d");ctx.clearRect(0,0,pad.width,pad.height);ctx.fillStyle="#fff";ctx.fillRect(0,0,pad.width,pad.height);}say("guessOcrStatus","തിരഞ്ഞെടുത്ത ഡാഷ് മായ്ച്ചു.");});
   $("recognizeGuess").addEventListener("click",async()=>{
     if(!isMyTurnToGuess()||roomData?.finished){toast("ഇപ്പോൾ നിങ്ങളുടെ ടീമിന്റെ ഊഹിക്കാനുള്ള ടേൺ അല്ല.");return;}
     if(selectedGuessIndex===null||selectedGuessIndex<0){toast("ആദ്യം ഒരു ഒഴിഞ്ഞ ഡാഷ് തിരഞ്ഞെടുക്കൂ.");return;}
-    const text=await recognizeCanvas("guessCanvas","guessOcrStatus");
+    const pad=document.querySelector(`.slot-draw-canvas[data-index="${selectedGuessIndex}"]`);
+    if(!pad){toast("തിരഞ്ഞെടുത്ത ഡാഷിൽ നേരിട്ട് അക്ഷരം വരയ്ക്കൂ.");return;}
+    const text=await recognizeCanvas(pad,"guessOcrStatus");
     const letter=graphemes(text).find(ch=>/[\u0D05-\u0D39\u0D7A-\u0D7F]/u.test(ch));
     if(!letter){say("guessOcrStatus","അക്ഷരം തിരിച്ചറിയാനായില്ല. വലുതായി ഒറ്റ അക്ഷരം മാത്രം വരയ്ക്കൂ.");return;}
     const basic=[...letter].find(ch=>/[\u0D05-\u0D39\u0D7A-\u0D7F]/u.test(ch));
     if(!basic){say("guessOcrStatus","മലയാളം അക്ഷരം തിരിച്ചറിയാനായില്ല.");return;}
     say("guessOcrStatus","തിരിച്ചറിഞ്ഞ അക്ഷരം: "+letter+" — പരിശോധിക്കുന്നു…");
     await guessLetter(basic,selectedGuessIndex);
-    clearCanvas("guessCanvas");
   });
   initDrawingCanvas("answerCanvas");initDrawingCanvas("guessCanvas");
   window.addEventListener("resize",resizeDrawingPads);
