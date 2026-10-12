@@ -160,7 +160,7 @@
     for(let index=0;index<shown.length;index++){
       const ch=shown[index], span=document.createElement("span"), slotIndex=index;
       if(ch===" "){span.className="letter-slot space";span.textContent="";}
-      else if(/[.,!?\'":\\-]/u.test(ch)){span.className="letter-slot punctuation";span.textContent=ch;}
+      else if(/[.,!?'":\\-]/u.test(ch)){span.className="letter-slot punctuation";span.textContent=ch;}
       else if(isMalayalamSign(ch)){span.className="letter-slot punctuation";span.textContent=ch;}
       else {
         const revealed=ch!=="_", placed=placements[index]||"";
@@ -240,7 +240,7 @@
     if(graphemes(answer).filter(c=>!/\s/u.test(c)).length>50){toast("ചെറിയ സിനിമയുടെ പേര് പരീക്ഷിക്കൂ.");return;}
     const creatorTeam=myPlayer()?.team??0;
     localHostAnswer=answer;
-    const puzzle={creatorTeam,mask:Array.from(answer).map(c=>/\s/u.test(c)||isMalayalamSign(c)||/[.,!?\'"():\-]/u.test(c)?c:"_").join(""),hint:hint||""};
+    const puzzle={creatorTeam,mask:Array.from(answer).map(c=>/\s/u.test(c)||isMalayalamSign(c)||/[.,!?'"():\-]/u.test(c)?c:"_").join(""),hint:hint||""};
     if(localMode){localState.puzzle=puzzle;localState.guesses={};localState.placements={};localState.wrong=0;localState.finished=false;localState.winner=null;roomData=localState;renderGame();}
     else {
       await roomRef.update({puzzle,guesses:{},placements:{},wrong:0,finished:false,winner:null});
@@ -285,7 +285,7 @@
     const winner=won?(1-roomData.puzzle.creatorTeam):roomData.puzzle.creatorTeam;
     const scores={...(roomData.scores||{0:0,1:0})};
     if(finished)scores[winner]=(scores[winner]||0)+1;
-    const revealedMask=answerSlots.map((target,i)=>/\s/u.test(target)||isMalayalamSign(target)||/[.,!?\'":\-]/u.test(target)?target:(matchesSlot(target,placements[i]||"")?target:"_")).join("");
+    const revealedMask=answerSlots.map((target,i)=>/\s/u.test(target)||isMalayalamSign(target)||/[.,!?'":\-]/u.test(target)?target:(matchesSlot(target,placements[i]||"")?target:"_")).join("");
     const patch={guesses:{...(roomData.guesses||{}),[String(index)+":"+ch]:true},placements,wrong,finished,winner,scores,puzzle:{...roomData.puzzle,mask:revealedMask}};
     await updateRoom(patch);
     if(!correct&&!finished)toast(`തെറ്റായ അക്ഷരം! ഇനി ${5-wrong} അവസരം.`);
