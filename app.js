@@ -249,7 +249,7 @@
   async function guessLetter(ch,index=null) {
     if(!isMyTurnToGuess()||roomData.finished||!roomData.puzzle)return;
     const shown=graphemes(roomData.puzzle.mask||""), placements=roomData.placements||{};
-    if(index===null) index=shown.findIndex((slot,i)=>slot==="_" && !placements[i]);
+    if(index===null) index=shown.findIndex(slot=>slot==="_");
     if(index===null||index<0||shown[index]!=="_") { toast("ആദ്യം ഒരു ഒഴിഞ്ഞ ഡാഷിൽ അക്ഷരം ചേർക്കൂ."); return; }
     if(localMode) { await hostProcessGuess(ch,index); return; }
     // Only the chosen character and blank position are sent; the movie answer stays with the host.
@@ -264,7 +264,7 @@
     if(!answer){toast("ഹോസ്റ്റിന്റെ ബ്രൗസറിൽ ഉത്തരം ലഭ്യമല്ല. ചോദ്യം വീണ്ടും തയ്യാറാക്കൂ.");return;}
     const answerSlots=graphemes(answer), maskSlots=graphemes(roomData.puzzle.mask||"");
     const placements={...(roomData.placements||{})};
-    if(index===null) index=maskSlots.findIndex((slot,i)=>slot==="_" && !placements[i]);
+    if(index===null) index=maskSlots.findIndex(slot=>slot==="_");
     if(index<0||index>=answerSlots.length||maskSlots[index]!=="_")return;
     const current=placements[index]||"";
     if(current.includes(ch))return;
@@ -273,13 +273,17 @@
     const nextPlaced=correct?(current+ch).normalize("NFC"):current;
     if(correct) placements[index]=nextPlaced;
     const wrong=(roomData.wrong||0)+(correct?0:1);
-    const slotComplete=answerSlots.map((target,i)=>/\s/u.test(target)||/[.,!?'":\-]/u.test(target)||((placements[i]||"").normalize("NFC")===target.normalize("NFC")));
+    const matchesSlot=(target,placed)=>{
+      const expected=[...target], actual=[...placed];
+      return expected.length===actual.length && expected.every(part=>actual.includes(part));
+    };
+    const slotComplete=answerSlots.map((target,i)=>/\s/u.test(target)||/[.,!?'":\-]/u.test(target)||matchesSlot(target,placements[i]||""));
     const won=slotComplete.every(Boolean);
     const finished=won||wrong>=5;
     const winner=won?(1-roomData.puzzle.creatorTeam):roomData.puzzle.creatorTeam;
     const scores={...(roomData.scores||{0:0,1:0})};
     if(finished)scores[winner]=(scores[winner]||0)+1;
-    const revealedMask=answerSlots.map((target,i)=>/\s/u.test(target)?" ":/[.,!?'":\-]/u.test(target)?target:((placements[i]||"").normalize("NFC")===target.normalize("NFC")?target:"_")).join("");
+    const revealedMask=answerSlots.map((target,i)=>/\s/u.test(target)?" ":/[.,!?'":\-]/u.test(target)?target:(matchesSlot(target,placements[i]||"")?target:"_")).join("");
     const patch={guesses:{...(roomData.guesses||{}),[String(index)+":"+ch]:true},placements,wrong,finished,winner,scores,puzzle:{...roomData.puzzle,mask:revealedMask}};
     await updateRoom(patch);
     if(!correct&&!finished)toast(`തെറ്റായ അക്ഷരം! ഇനി ${5-wrong} അവസരം.`);
