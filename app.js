@@ -196,16 +196,27 @@
     const builder=$("answerBuilder"), tray=$("creatorAlphabetTray");
     if (!builder || !tray) return;
     builder.innerHTML="";
-    if (!draftAnswer) {
+    const chars=Array.from(draftAnswer);
+    if (!chars.length) {
       const placeholder=document.createElement("span");
       placeholder.className="builder-placeholder";
-      placeholder.textContent="അക്ഷരങ്ങൾ ഇവിടെ ചേർക്കൂ…";
+      placeholder.textContent="ആദ്യം “ഡാഷ് ചേർക്കുക” അമർത്തൂ, പിന്നെ അക്ഷരങ്ങൾ വലിച്ചിടൂ…";
       builder.appendChild(placeholder);
     } else {
-      graphemes(draftAnswer).forEach(ch=>{
+      chars.forEach((ch,index)=>{
         const chip=document.createElement("span");
-        chip.className="builder-chip";
-        chip.textContent=ch===" "?"␠":ch;
+        chip.className=ch==="_"?"builder-chip builder-slot":"builder-chip";
+        chip.textContent=ch===" "?"␠":ch==="_"?"—":ch;
+        if(ch==="_"){
+          chip.setAttribute("aria-label","അക്ഷരം ഇടാനുള്ള ഒഴിഞ്ഞ സ്ഥലം");
+          chip.ondragover=e=>{e.preventDefault();chip.classList.add("drag-over");};
+          chip.ondragleave=()=>chip.classList.remove("drag-over");
+          chip.ondrop=e=>{
+            e.preventDefault();e.stopPropagation();chip.classList.remove("drag-over");
+            const letter=e.dataTransfer.getData("text/plain");
+            if(letter)addAnswerCharacter(letter,index);
+          };
+        }
         builder.appendChild(chip);
       });
     }
@@ -213,22 +224,31 @@
     ALPHABET.forEach(ch=>{
       const b=document.createElement("button");
       b.type="button"; b.className="letter-tile"; b.textContent=ch;
-      b.draggable=true; b.setAttribute("aria-label",`അക്ഷരം ${ch} ചേർക്കുക`);
-      b.addEventListener("click",()=>addAnswerCharacter(ch));
+      b.draggable=true; b.setAttribute("aria-label",`അക്ഷരം ${ch} വലിച്ചിടുക`);
       b.addEventListener("dragstart",e=>{e.dataTransfer.setData("text/plain",ch);e.dataTransfer.effectAllowed="copy";});
       tray.appendChild(b);
     });
-    builder.ondragover=e=>{e.preventDefault();builder.classList.add("drag-over");};
-    builder.ondragleave=()=>builder.classList.remove("drag-over");
-    builder.ondrop=e=>{e.preventDefault();builder.classList.remove("drag-over");const ch=e.dataTransfer.getData("text/plain");if(ch)addAnswerCharacter(ch);};
   }
-  function addAnswerCharacter(ch) {
-    if (!ch || graphemes(draftAnswer).length>=50) { toast("സിനിമയുടെ പേര് കുറച്ച് ചുരുക്കൂ."); return; }
-    draftAnswer += ch;
+  function addDash() {
+    if(Array.from(draftAnswer).length>=50){toast("സിനിമയുടെ പേര് കുറച്ച് ചുരുക്കൂ.");return;}
+    draftAnswer+="_";
+    renderCreatorBuilder();
+  }
+  function addAnswerCharacter(ch,index) {
+    if(!ch||index===undefined)return;
+    const parts=Array.from(draftAnswer);
+    if(parts[index]!=="_"){toast("അക്ഷരം ചേർക്കാൻ ഒഴിഞ്ഞ ഡാഷിലേക്ക് വലിച്ചിടൂ.");return;}
+    parts[index]=ch;
+    draftAnswer=parts.join("");
+    renderCreatorBuilder();
+  }
+  function addWordSpace() {
+    const parts=Array.from(draftAnswer);
+    if(parts.length && parts[parts.length-1]!==" ") draftAnswer+=" ";
     renderCreatorBuilder();
   }
   function undoAnswerCharacter() {
-    const parts=graphemes(draftAnswer);
+    const parts=Array.from(draftAnswer);
     parts.pop();
     draftAnswer=parts.join("");
     renderCreatorBuilder();
@@ -237,6 +257,7 @@
     if(!isHost||!roomData)return;
     const answer=normalize(draftAnswer), hint=normalize($("movieHint").value);
     if(!answer||!/[ഀ-ൿ]/u.test(answer)){toast("സിനിമയുടെ പേര് മലയാളത്തിൽ നൽകൂ.");return;}
+    if(answer.includes("_")){toast("എല്ലാ ഡാഷുകളിലും അക്ഷരമോ ചിഹ്നമോ വലിച്ചിട്ട് ചേർക്കൂ.");return;}
     if(graphemes(answer).filter(c=>!/\s/u.test(c)).length>50){toast("ചെറിയ സിനിമയുടെ പേര് പരീക്ഷിക്കൂ.");return;}
     const creatorTeam=myPlayer()?.team??0;
     localHostAnswer=answer;
@@ -311,7 +332,7 @@
   document.querySelectorAll(".mode-choice").forEach(b=>b.addEventListener("click",()=>{selectedMode=b.dataset.mode;document.querySelectorAll(".mode-choice").forEach(x=>x.classList.toggle("selected",x===b));}));
   $("createRoom").addEventListener("click",createRoom); $("joinRoom").addEventListener("click",joinRoom);
   $("startGame").addEventListener("click",startGame); $("submitPuzzle").addEventListener("click",submitPuzzle);
-  $("addWordSpace").addEventListener("click",()=>addAnswerCharacter(" "));
+  $("addDash").addEventListener("click",addDash); $("addWordSpace").addEventListener("click",addWordSpace);
   $("undoAnswer").addEventListener("click",undoAnswerCharacter);
   $("clearAnswer").addEventListener("click",()=>{draftAnswer="";renderCreatorBuilder();});
   $("nextRound").addEventListener("click",nextRound); $("backToLobby").addEventListener("click",leaveRoom); $("leaveWaiting").addEventListener("click",leaveRoom);
