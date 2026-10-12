@@ -199,7 +199,7 @@
           }
           if(isHost&&!roomData.finished&&!mark){
             const controls=document.createElement("div");controls.className="judge-controls";
-            const yes=document.createElement("button");yes.type="button";yes.className="judge-yes";yes.textContent="✓";yes.title="അക്ഷരം ശരി";yes.addEventListener("click",e=>{e.stopPropagation();judgeDrawing(slotIndex,true);});
+            const yes=document.createElement("button");yes.type="button";yes.className="judge-yes";yes.textContent="✓";yes.title="അക്ഷരം ശരി";yes.addEventListener("click",e=>{e.stopPropagation();openLetterPicker(slotIndex);});
             const no=document.createElement("button");no.type="button";no.className="judge-no";no.textContent="✕";no.title="അക്ഷരം തെറ്റ്";no.addEventListener("click",e=>{e.stopPropagation();judgeDrawing(slotIndex,false);});
             controls.append(yes,no);span.appendChild(controls);
           }
@@ -289,7 +289,7 @@
   async function submitPuzzle() {
     if(!isHost||!roomData)return;
     const answer=normalize($("movieAnswer").value), hint=normalize($("movieHint").value);
-    if(!answer||!/[\u0D00-\u0D7F]/u.test(answer)){toast("സിനിമയുടെ യഥാർത്ഥ പേര് മലയാളത്തിൽ നൽകൂ.");return;}
+    if(!answer||!/^[A-Za-z0-9 .’():!?-]+$/u.test(answer)){toast("സിനിമയുടെ പേര് ഇംഗ്ലീഷ് അക്ഷരങ്ങളിൽ നൽകൂ.");return;}
     if(!clueHasInk){toast("ആദ്യം വലിയ പാഡിൽ ഡാഷുകളോ ചിഹ്നങ്ങളോ വരയ്ക്കൂ.");return;}
     if(graphemes(answer).filter(c=>! /\s/u.test(c)).length>50){toast("ചെറിയ സിനിമയുടെ പേര് പരീക്ഷിക്കൂ.");return;}
     const creatorTeam=myPlayer()?.team??0;
@@ -325,12 +325,12 @@
     if(localMode){localState.drawings=drawings;localState.marks=marks;roomData=localState;renderGame();}
     else {await roomRef.update({drawings,marks});}
   }
-  async function judgeDrawing(index,correct) {
+  async function judgeDrawing(index,correct,chosenLetter=null) {
     if(!isHost||!roomData?.puzzle||roomData.finished)return;
     const drawings={...(roomData.drawings||{})}, marks={...(roomData.marks||{})};
     if(!drawings[index]||marks[index])return;
-    const answer=Array.from(localHostAnswer||"");
-    const target=answer[index];
+    const target=chosenLetter;
+    if(correct&&!target){toast("ശരിയായ മലയാളം അക്ഷരം തിരഞ്ഞെടുക്കൂ.");return;}
     if(correct){
       marks[index]="correct";
       const mask=Array.from(roomData.puzzle.mask||"");
@@ -351,6 +351,17 @@
       toast(finished?"അഞ്ച് തെറ്റുകൾ! റൗണ്ട് അവസാനിച്ചു.":"ചുവപ്പ് ✕ അടയാളപ്പെടുത്തി — തെറ്റായ അക്ഷരം.");
     }
   }
+  function openLetterPicker(index){
+    const grid=$("letterPickerGrid");grid.innerHTML="";
+    MALAYALAM.forEach(ch=>{
+      const button=document.createElement("button");button.type="button";button.className="letter-picker-button";button.textContent=ch;
+      button.addEventListener("click",async()=>{$("letterPickerDialog").close();await judgeDrawing(index,true,ch);});
+      grid.appendChild(button);
+    });
+    $("letterPickerDialog").dataset.index=String(index);
+    $("letterPickerDialog").showModal();
+  }
+  $("closeLetterPicker").addEventListener("click",()=>$("letterPickerDialog").close());
   async function nextRound() {
     if(!isHost)return;
     const next=(roomData.round||1)+1;
