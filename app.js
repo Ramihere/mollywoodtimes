@@ -289,7 +289,7 @@
   async function submitPuzzle() {
     if(!isHost||!roomData)return;
     const answer=normalize($("movieAnswer").value), hint=normalize($("movieHint").value);
-    if(!answer||!/^[A-Za-z0-9 .’():!?-]+$/u.test(answer)){toast("സിനിമയുടെ പേര് ഇംഗ്ലീഷ് അക്ഷരങ്ങളിൽ നൽകൂ.");return;}
+    if(!answer||!/[\u0D00-\u0D7F]/u.test(answer)){toast("താഴെയുള്ള അക്ഷരങ്ങൾ ഉപയോഗിച്ച് സിനിമയുടെ പേര് തയ്യാറാക്കൂ.");return;}
     if(!clueHasInk){toast("ആദ്യം വലിയ പാഡിൽ ഡാഷുകളോ ചിഹ്നങ്ങളോ വരയ്ക്കൂ.");return;}
     if(graphemes(answer).filter(c=>! /\s/u.test(c)).length>50){toast("ചെറിയ സിനിമയുടെ പേര് പരീക്ഷിക്കൂ.");return;}
     const creatorTeam=myPlayer()?.team??0;
@@ -385,6 +385,18 @@
   $("roomCode").addEventListener("input",e=>e.target.value=e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,""));
   $("helpBtn").addEventListener("click",()=>$("helpDialog").showModal()); $("closeHelp").addEventListener("click",()=>$("helpDialog").close());
 
+  function initAnswerKeyboard(){
+    const keyboard=$("answerKeyboard");if(!keyboard)return;
+    [...MALAYALAM,...SIGNS].forEach(ch=>{
+      const b=document.createElement("button");b.type="button";b.className="answer-key";b.textContent=ch;
+      b.addEventListener("click",()=>{const input=$("movieAnswer");if(graphemes(input.value).length>=50){toast("സിനിമയുടെ പേര് കുറച്ച് ചുരുക്കൂ.");return;}input.value+=ch;});
+      keyboard.appendChild(b);
+    });
+    $("answerSpace").addEventListener("click",()=>{const input=$("movieAnswer");if(input.value&&!input.value.endsWith(" "))input.value+=" ";});
+    $("answerBackspace").addEventListener("click",()=>{const input=$("movieAnswer");input.value=graphemes(input.value).slice(0,-1).join("");});
+    $("answerClear").addEventListener("click",()=>{$("movieAnswer").value="";});
+  }
+  initAnswerKeyboard();
   // Team A draws a public clue made of dashes and symbols; it is not OCR-processed.
   let clueHasInk=false;
   function initClueCanvas(){
