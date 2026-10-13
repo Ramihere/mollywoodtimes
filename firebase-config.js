@@ -6,7 +6,7 @@
 window.FIREBASE_GAME_CONFIG = {
   configured: true,
   config: {
-    apiKey: "AIzaSyCWrsPhvAiZQVmSE-FHapKDTQaQt-i2LF4",
+    apiKey: "AIzaSyCwrsPhvAiZQVmSE-FHapKDTQaQt-i2LF4",
     authDomain: "mollywood-times.firebaseapp.com",
     databaseURL: "https://mollywood-times-default-rtdb.asia-southeast1.firebasedatabase.app",
     projectId: "mollywood-times",
