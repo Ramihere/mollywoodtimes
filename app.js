@@ -68,7 +68,13 @@
         await db.ref("roomSecrets/"+roomCode).set({answer:"",hint:""});
         listenRoom(); $("roomCodeDisplay").innerHTML=`${roomCode} <span>▢</span>`;
         $("gameRoomCode").textContent=roomCode; setScreen($waiting); return;
-      } catch(e) { console.error(e); toast("ഓൺലൈൻ മുറി ഉണ്ടാക്കാനായില്ല. Firebase ക്രമീകരണം പരിശോധിക്കൂ."); return; }
+      } catch(e) {
+        console.error("Firebase create-room error:", e);
+        const detail = e?.code || e?.message || "Unknown error";
+        toast("Firebase error: " + detail);
+        say("lobbyMessage", "Firebase error: " + detail);
+        return;
+      }
     }
     localMode=true; isHost=true; roomCode=makeCode();
     const host={uid:"local-host",name:myName,team:0};
