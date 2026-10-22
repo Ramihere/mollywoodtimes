@@ -40,3 +40,21 @@ main{max-width:1180px;padding:12px 24px 42px}
  .setup-stack{gap:14px}
  .setup label{margin-top:8px}
 }
+
+
+/* Keep create and join room controls visible together on desktop */
+@media(min-width:761px){
+  .hero{grid-template-columns:minmax(0,1fr) minmax(390px,.94fr);gap:28px;padding:28px}
+  .hero>div:first-child{position:sticky;top:24px;align-self:center}
+  .setup-stack{gap:10px}
+  .setup label{margin:7px 0 5px}
+  .setup input,.movie-input{min-height:40px;padding:9px 12px}
+  .form-title{margin-bottom:7px}
+  .setup-divider{margin:0}
+  .setup .wide{margin-top:10px;padding:10px 14px}
+  .setup .help{margin:6px 0 0}
+  .setup{padding:18px}
+  .hero h1{font-size:clamp(2rem,3.2vw,3rem);line-height:1.08;margin:13px 0}
+  .hero p{font-size:.9rem;line-height:1.65}
+  .feature-pills{margin-top:16px}
+}
