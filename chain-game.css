@@ -58,3 +58,31 @@ main{max-width:1180px;padding:12px 24px 42px}
   .hero p{font-size:.9rem;line-height:1.65}
   .feature-pills{margin-top:16px}
 }
+
+
+/* Landing page: compact intro with Create and Join panels side by side */
+@media(min-width:761px){
+  main{max-width:1220px;padding:12px 22px 24px}
+  .topbar{max-width:1220px;padding:14px 22px}
+  #setup.hero{display:flex;flex-direction:column;align-items:stretch;gap:20px;padding:24px;border-radius:24px}
+  #setup.hero>div:first-child{padding:0;position:static}
+  #setup.hero h1{font-size:clamp(2rem,3.1vw,2.8rem);line-height:1.08;margin:9px 0}
+  #setup.hero p{font-size:.88rem;line-height:1.55;max-width:760px;margin:0}
+  #setup .feature-pills{margin-top:12px}
+  #setup .setup-stack{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:stretch;gap:16px;padding:0;background:transparent;border:0;border-radius:0}
+  #setup .setup-stack form{background:#151326;border:1px solid var(--line);border-radius:18px;padding:18px;min-width:0}
+  #setup .setup-divider{display:none}
+  #setup .setup-stack label{margin:7px 0 5px;font-size:.8rem}
+  #setup .setup-stack input,#setup .setup-stack .movie-input{min-height:40px;padding:9px 11px}
+  #setup .setup-stack .wide{margin-top:12px;padding:11px 14px}
+  #setup .setup-stack .help{margin:7px 0 0}
+  #setup .form-title{font-size:1.05rem;margin:0 0 10px}
+}
+@media(max-width:760px){
+  #setup.hero{display:flex;flex-direction:column;gap:18px;padding:20px 16px}
+  #setup .setup-stack{display:flex;flex-direction:column;gap:14px;padding:0;background:transparent;border:0}
+  #setup .setup-stack form{background:#151326;border:1px solid var(--line);border-radius:16px;padding:16px}
+  #setup .setup-divider{font-size:.65rem}
+  #setup.hero h1{font-size:2.15rem;line-height:1.1;margin:10px 0}
+  #setup.hero p{font-size:.88rem;line-height:1.6}
+}
