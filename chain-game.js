@@ -26,7 +26,7 @@ function toast(msg){const el=$("toast");el.textContent=msg;el.classList.add("sho
 function showGame(on){$("setup").classList.toggle("hidden",on);$("game").classList.toggle("hidden",!on);}
 function gameRef(){return ref(db,"rooms/"+state.code+"/game");}
 function playerTeam(uid){return state.players[uid]?.team;}
-function myTurn(){return !!state.game && playerTeam(state.uid)===state.game.turn && !state.game.ended;}
+function myTurn(){return !!state.game && playerTeam(state.uid)===state.game.turn && !state.game.ended && !state.game.pending;}
 function render(){
   if(!state.game||!state.meta)return;
   const g=state.game,m=state.meta;
@@ -45,9 +45,20 @@ function render(){
   $("submitMovie").disabled=!myTurn();
   $("movieInput").disabled=!myTurn();
   $("skipTurn").disabled=!myTurn();
+  const pending=g.pending||null;
+  $("pendingPanel").classList.toggle("hidden",!pending);
+  if(pending){
+    $("pendingTitle").textContent=pending.title;
+    $("pendingMeta").textContent=(m.teamNames?.[pending.team]||("Team "+(pending.team===0?"A":"B")))+" · "+(pending.player||"Player")+" submitted this title. Waiting for the other team.";
+    const canJudge=playerTeam(state.uid)!==pending.team&&!g.ended;
+    $("acceptMovie").classList.toggle("hidden",!canJudge);
+    $("rejectMovie").classList.toggle("hidden",!canJudge);
+    $("pendingWait").classList.toggle("hidden",canJudge);
+    $("pendingWait").textContent=canJudge?"":"Waiting for the opposing team to accept or reject…";
+  }
   $("undoMovie").disabled=!state.isHost||!g.chain?.length||g.ended;
   $("endGame").disabled=!state.isHost||g.ended;
-  $("timerToggle").disabled=!state.isHost||g.ended;
+  $("timerToggle").disabled=!state.isHost||g.ended||!!g.pending;
   $("timerToggle").textContent=g.timerRunning?"Pause Timer":"Start Timer";
   $("timerLabel").textContent=(g.remaining??m.seconds)+"s";
   $("timerFill").style.width=((g.remaining??m.seconds)/m.seconds*100)+"%";
@@ -72,8 +83,9 @@ function friendlyError(e){if(e?.code==="PERMISSION_DENIED"||String(e?.message||"
 async function enterRoom(){showGame(true);$("movieInput").value="";$("connectionState").textContent="Connecting…";const base=roomPath();state.unsubscribers.forEach(fn=>fn());state.unsubscribers=[];state.unsubscribers.push(onValue(ref(db,base+"/meta"),snap=>{if(!snap.exists()){toast("This room no longer exists.");return;}state.meta=snap.val();render();}));state.unsubscribers.push(onValue(ref(db,base+"/players"),snap=>{state.players=snap.val()||{};render();}));state.unsubscribers.push(onValue(ref(db,base+"/game"),snap=>{state.game=snap.val();render();}));if(state.isHost)startHostServices();else state.unsubscribers.push(onValue(ref(db,base+"/meta/hostUid"),snap=>{if(!snap.exists())toast("The host is no longer available.");}));}
 function startHostServices(){const requestsRef=ref(db,roomPath("requests"));state.unsubscribers.push(onChildAdded(requestsRef,snap=>{const requestId=snap.key;const request=snap.val();if(!request||state.processed.has(requestId))return;state.processed.add(requestId);state.requestQueue=state.requestQueue.then(()=>processRequest(requestId,request)).catch(e=>{console.error(e);});}));if(state.timer)clearInterval(state.timer);state.timer=setInterval(()=>{if(state.timerBusy||!state.game?.timerRunning||state.game?.ended)return;state.timerBusy=true;state.requestQueue=state.requestQueue.then(async()=>{const snap=await get(gameRef());if(!snap.exists())return;const g=snap.val();if(!g.timerRunning||g.ended)return;g.remaining=Math.max(0,(g.remaining??state.meta.seconds)-1);if(g.remaining<=0){g.turn=1-g.turn;g.remaining=state.meta.seconds;g.message="Time is up! The turn has passed to the other team.";}await set(gameRef(),g);}).catch(console.error).finally(()=>{state.timerBusy=false;});},1000);}
 async function processRequest(requestId,request){try{const reqRef=ref(db,roomPath("requests/"+requestId));const uid=request.uid;const playersSnap=await get(ref(db,roomPath("players")));const players=playersSnap.val()||{};const player=players[uid];const meta=state.meta||(await get(ref(db,roomPath("meta")))).val();const gameSnap=await get(gameRef());if(!gameSnap.exists())return;const g=gameSnap.val();if(!player)return;
-if(request.action==="move"){if(g.ended||player.team!==g.turn){g.message="That move was not accepted: it is not your team's turn.";await set(gameRef(),g);return;}const title=norm(request.title);if(!title){g.message="Enter a movie title.";await set(gameRef(),g);return;}const key=title.toLocaleLowerCase().replace(/\s+/g," ");if((g.usedTitles||[]).includes(key)){g.message="That movie has already been used. Try another title.";await set(gameRef(),g);return;}const ch=letters(title);const last=g.chain?.length?letters(g.chain[g.chain.length-1].title).last:"";if(!ch.first||!ch.last||(last&&ch.first!==last)){g.message=last?"That title must start with “"+last.toUpperCase()+"”.":"Please enter a readable movie title.";await set(gameRef(),g);return;}g.chain=g.chain||[];g.usedTitles=g.usedTitles||[];g.chain.push({title,team:player.team,player:player.name,time:Date.now()});g.usedTitles.push(key);g.scores[player.team]++;g.turn=1-g.turn;g.remaining=meta.seconds;g.message="Accepted! The next team must start with “"+ch.last.toUpperCase()+"”.";await set(gameRef(),g);return;}
-if(request.action==="skip"){if(g.ended||player.team!==g.turn){g.message="Only the team whose turn it is can skip.";await set(gameRef(),g);return;}g.turn=1-g.turn;g.remaining=meta.seconds;g.message=player.name+" skipped the turn. No point awarded.";await set(gameRef(),g);return;}
+if(request.action==="move"){if(g.ended||g.pending||player.team!==g.turn){g.message="That move was not accepted: it is not your team's turn, or a title is awaiting review.";await set(gameRef(),g);return;}const title=norm(request.title);if(!title){g.message="Enter a movie title.";await set(gameRef(),g);return;}const key=title.toLocaleLowerCase().replace(/\s+/g," ");if((g.usedTitles||[]).includes(key)){g.message="That movie has already been used. Try another title.";await set(gameRef(),g);return;}const ch=letters(title);const last=g.chain?.length?letters(g.chain[g.chain.length-1].title).last:"";if(!ch.first||!ch.last||(last&&ch.first!==last)){g.message=last?"That title must start with “"+last.toUpperCase()+"”.":"Please enter a readable movie title.";await set(gameRef(),g);return;}g.pending={title,team:player.team,uid:uid,player:player.name,time:Date.now()};g.timerRunning=false;g.message=title+" was submitted. The opposing team must accept or reject it.";await set(gameRef(),g);return;}
+if(request.action==="accept"||request.action==="reject"){const pending=g.pending;if(g.ended||!pending||player.team===pending.team){g.message="Only the opposing team can review this movie.";await set(gameRef(),g);return;}if(request.action==="accept"){g.chain=g.chain||[];g.usedTitles=g.usedTitles||[];const key=pending.title.toLocaleLowerCase().replace(/\s+/g," ");if(!(g.usedTitles||[]).includes(key)){g.chain.push({title:pending.title,team:pending.team,player:pending.player,time:pending.time});g.usedTitles.push(key);g.scores[pending.team]++;}const ending=letters(pending.title).last;g.turn=1-pending.team;g.message="Movie accepted! "+(meta.teamNames?.[g.turn]||("Team "+(g.turn===0?"A":"B")))+" plays next and must start with “"+ending.toUpperCase()+"”.";}else{g.turn=1-pending.team;g.message="Movie rejected by the opposing team. No point awarded; "+(meta.teamNames?.[g.turn]||("Team "+(g.turn===0?"A":"B")))+" plays next.";}g.pending=null;g.remaining=meta.seconds;await set(gameRef(),g);return;}
+if(request.action==="skip"){if(g.ended||g.pending||player.team!==g.turn){g.message="Only the team whose turn it is can skip when no movie is awaiting review.";await set(gameRef(),g);return;}g.turn=1-g.turn;g.remaining=meta.seconds;g.message=player.name+" skipped the turn. No point awarded.";await set(gameRef(),g);return;}
 if(request.action==="undo"&&uid===meta.hostUid){if(g.ended||!g.chain?.length)return;const item=g.chain.pop();g.usedTitles=(g.usedTitles||[]).filter(x=>x!==item.title.toLocaleLowerCase().replace(/\s+/g," "));g.scores[item.team]=Math.max(0,g.scores[item.team]-1);g.turn=item.team;g.remaining=meta.seconds;g.message="Removed “"+item.title+"” from the chain.";await set(gameRef(),g);return;}
 if(request.action==="end"&&uid===meta.hostUid){g.ended=true;g.timerRunning=false;g.message="Game ended by the host.";await set(gameRef(),g);return;}
 if(request.action==="timer"&&uid===meta.hostUid&&!g.ended){g.timerRunning=!g.timerRunning;g.message=g.timerRunning?"The countdown timer is running.":"The countdown timer is paused.";await set(gameRef(),g);return;}
@@ -83,6 +95,8 @@ $("setupForm").addEventListener("submit",createRoom);
 $("joinRoomForm").addEventListener("submit",joinRoom);
 $("movieForm").addEventListener("submit",e=>{e.preventDefault();const title=norm($("movieInput").value);if(!title){say("Enter a movie title.",true);return;}sendAction("move",{title});$("movieInput").value="";});
 $("skipTurn").addEventListener("click",()=>sendAction("skip"));
+$("acceptMovie").addEventListener("click",()=>sendAction("accept"));
+$("rejectMovie").addEventListener("click",()=>sendAction("reject"));
 $("undoMovie").addEventListener("click",()=>sendAction("undo"));
 $("endGame").addEventListener("click",()=>sendAction("end"));
 $("timerToggle").addEventListener("click",()=>sendAction("timer"));
