@@ -19,7 +19,7 @@
         "requests": {
           ".read": "auth != null && root.child('rooms').child($room).child('meta').child('hostUid').val() == auth.uid",
           "$requestId": {
-            ".write": "auth != null && (( !data.exists() && root.child('rooms').child($room).child('players').child(auth.uid).exists() && newData.child('uid').val() == auth.uid && (newData.child('action').val() == 'move' || newData.child('action').val() == 'skip' || newData.child('action').val() == 'accept' || newData.child('action').val() == 'reject' || newData.child('action').val() == 'undo' || newData.child('action').val() == 'end' || newData.child('action').val() == 'timer') && newData.child('createdAt').isNumber()) || (data.exists() && root.child('rooms').child($room).child('meta').child('hostUid').val() == auth.uid && !newData.exists()))"
+            ".write": "auth != null && (( !data.exists() && root.child('rooms').child($room).child('players').child(auth.uid).exists() && newData.child('uid').val() == auth.uid && (newData.child('action').val() == 'move' || newData.child('action').val() == 'skip' || newData.child('action').val() == 'reject' || newData.child('action').val() == 'undo' || newData.child('action').val() == 'end' || newData.child('action').val() == 'timer') && newData.child('createdAt').isNumber()) || (data.exists() && root.child('rooms').child($room).child('meta').child('hostUid').val() == auth.uid && !newData.exists()))"
           }
         }
       }
