@@ -1,18 +1,96 @@
-(() => {
-"use strict";
-const $=id=>document.getElementById(id);
-const state={scores:[0,0],chain:[],turn:0,seconds:30,remaining:30,timer:null,ended:false,used:new Set()};
-const norm=s=>String(s||"").normalize("NFC").replace(/[\u200B-\u200D\uFEFF]/g,"").replace(/\s+/g," ").trim();
-const parts=s=>window.Intl&&Intl.Segmenter?[...new Intl.Segmenter("ml",{granularity:"grapheme"}).segment(s)].map(x=>x.segment):[...s];
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+import { getDatabase, ref, get, set, update, remove, push, onValue, onChildAdded } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCWrsPhvAiZQVmsE-FHapKDTQaQt-i2Lf4",
+  authDomain: "mollywood-times.firebaseapp.com",
+  databaseURL: "https://mollywood-times-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "mollywood-times",
+  storageBucket: "mollywood-times.firebasestorage.app",
+  messagingSenderId: "533170680427",
+  appId: "1:533170680427:web:75ddbc78598125785ab72e",
+  measurementId: "G-H4ZY0B5MP8"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
+const $ = id => document.getElementById(id);
+const state = { uid:null, code:null, isHost:false, myTeam:null, meta:null, players:{}, game:null, timer:null, timerBusy:false, requestQueue:Promise.resolve(), processed:new Set(), unsubscribers:[] };
+const norm = s => String(s||"").normalize("NFC").replace(/[\u200B-\u200D\uFEFF]/g,"").replace(/\s+/g," ").trim();
+const parts = s => window.Intl&&Intl.Segmenter ? [...new Intl.Segmenter("ml",{granularity:"grapheme"}).segment(s)].map(x=>x.segment) : [...s];
 function letters(value){const s=norm(value).replace(/[\s.,!?'"“”‘’()\[\]{}:;—–-]+$/u,"");if(!s)return{first:"",last:""};if(!/[\u0D00-\u0D7F]/u.test(s)){const x=s.toLowerCase().replace(/[^a-z0-9]/g,"");return{first:x[0]||"",last:x[x.length-1]||""};}const a=parts(s).filter(x=>/[\u0D00-\u0D7F]/u.test(x));return{first:(a[0]||"").toLowerCase(),last:(a[a.length-1]||"").toLowerCase()};}
-function say(msg,bad){$("status").textContent=msg||"";$("status").style.color=bad?"var(--danger)":"var(--orange)";}
-function render(){ $("scoreA").textContent=state.scores[0];$("scoreB").textContent=state.scores[1];$("teamA").classList.toggle("active",state.turn===0);$("teamB").classList.toggle("active",state.turn===1);$("turnName").textContent=state.turn===0?"Team A":"Team B";$("turnBanner").textContent=state.ended?"Game over!":state.chain.length?("Now: "+(state.turn===0?"Team A":"Team B")+"'s turn"):"Enter the first movie to start";const req=state.chain.length?letters(state.chain[state.chain.length-1].title).last:"";$("requiredLetter").textContent=req?req.toUpperCase():"—";$("movieInput").placeholder=req?("“"+req.toUpperCase()+"””"):"e.g. Vettam";$("requiredLabel").textContent=req?"Required starting letter":"First movie";$("submitMovie").textContent=state.chain.length?"Add Movie →":"Start Game →";$("submitMovie").disabled=state.ended;$("movieInput").disabled=state.ended;$("skipTurn").disabled=state.ended;$("undoMovie").disabled=!state.chain.length||state.ended;$("endGame").disabled=!state.chain.length||state.ended;$("chainCount").textContent=state.chain.length;$("timerLabel").textContent=state.remaining+"s";$("timerFill").style.width=(state.remaining/state.seconds*100)+"%";$("timerFill").classList.toggle("low",state.remaining<=8);$("timerToggle").textContent=state.timer?"Stop Timer":"Start Timer";const list=$("chainList");list.innerHTML="";if(!state.chain.length){list.innerHTML='<div class="empty-chain">🎬 Enter the first movie title.<br>Team A plays first!</div>';return;}state.chain.forEach((item,i)=>{const row=document.createElement("div");row.className="chain-item";const n=document.createElement("span");n.className="chain-number";n.textContent=i+1;const info=document.createElement("div");const title=document.createElement("div");title.className="movie-title";title.textContent=item.title;const meta=document.createElement("div");meta.className="movie-meta";meta.textContent="Team "+(item.team===0?"A":"B")+" · "+item.time;info.append(title,meta);const tag=document.createElement("span");tag.className="letter-tag";tag.textContent=letters(item.title).last.toUpperCase();row.append(n,info,tag);list.append(row);});}
-function switchTurn(){state.turn=1-state.turn;state.remaining=state.seconds;render();}
-function submit(){if(state.ended)return;const title=norm($("movieInput").value);if(!title){say("Enter a movie title.",true);return;}const key=title.toLowerCase().replace(/\s+/g," ");if(state.used.has(key)){say("That movie has already been used. Enter a different title.",true);return;}const ch=letters(title);if(!ch.first||!ch.last){say("Could not read the movie title.",true);return;}const req=state.chain.length?letters(state.chain[state.chain.length-1].title).last:"";if(req&&ch.first!==req){say("This movie must start with the letter “"+req.toUpperCase()+"”.",true);return;}state.chain.push({title:title,team:state.turn,time:new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})});state.used.add(key);state.scores[state.turn]++;state.remaining=state.seconds;$("movieInput").value="";say("Accepted! The next team must enter a movie starting with “"+ch.last.toUpperCase()+"”.");switchTurn();}
-function skip(){if(state.ended)return;say("Team "+(state.turn===0?"A":"B")+" skipped their turn. No point awarded.");state.remaining=state.seconds;switchTurn();}
-function undo(){if(!state.chain.length||state.ended)return;const item=state.chain.pop();state.used.delete(item.title.toLowerCase().replace(/\s+/g," "));state.scores[item.team]=Math.max(0,state.scores[item.team]-1);state.turn=item.team;state.remaining=state.seconds;say("“"+item.title+"” was removed. Team "+(item.team===0?"A":"B")+" can play again.");render();}
-function endGame(reason){if(state.ended)return;state.ended=true;clearInterval(state.timer);state.timer=null;const winner=state.scores[0]===state.scores[1]?"It's a tie!":state.scores[0]>state.scores[1]?"Team A wins!":"Team B wins!";say(winner+" "+(reason||""));render();$("turnBanner").textContent=winner;}
-function timerClick(){if(state.ended)return;if(state.timer){clearInterval(state.timer);state.timer=null;render();return;}state.timer=setInterval(()=>{state.remaining--;if(state.remaining<=0){clearInterval(state.timer);state.timer=null;skip();return;}render();},1000);render();}
-function start(){state.seconds=Number($("duration").value)||30;state.remaining=state.seconds;state.chain=[];state.used.clear();state.scores=[0,0];state.turn=0;state.ended=false;clearInterval(state.timer);state.timer=null;$("teamALabel").textContent=norm($("nameA").value)||"Team A";$("teamBLabel").textContent=norm($("nameB").value)||"Team B";$("movieInput").value="";$("status").textContent="";$("setup").classList.add("hidden");$("game").classList.remove("hidden");say("Team A goes first. Enter the first movie title.");render();$("movieInput").focus();}
-$("setupForm").addEventListener("submit",e=>{e.preventDefault();start();});$("movieForm").addEventListener("submit",e=>{e.preventDefault();submit();});$("skipTurn").addEventListener("click",skip);$("undoMovie").addEventListener("click",undo);$("endGame").addEventListener("click",()=>endGame("Well played!"));$("timerToggle").addEventListener("click",timerClick);$("restart").addEventListener("click",()=>{clearInterval(state.timer);state.timer=null;$("game").classList.add("hidden");$("setup").classList.remove("hidden");});$("helpBtn").addEventListener("click",()=>$("helpDialog").showModal());$("closeHelp").addEventListener("click",()=>$("helpDialog").close());render();
-})();
+function say(msg,bad=false){$("status").textContent=msg||"";$("status").style.color=bad?"var(--danger)":"var(--orange)";}
+function toast(msg){const el=$("toast");el.textContent=msg;el.classList.add("show");setTimeout(()=>el.classList.remove("show"),2800);}
+function showGame(on){$("setup").classList.toggle("hidden",on);$("game").classList.toggle("hidden",!on);}
+function gameRef(){return ref(db,"rooms/"+state.code+"/game");}
+function playerTeam(uid){return state.players[uid]?.team;}
+function myTurn(){return !!state.game && playerTeam(state.uid)===state.game.turn && !state.game.ended;}
+function render(){
+  if(!state.game||!state.meta)return;
+  const g=state.game,m=state.meta;
+  $("roomCodeDisplay").textContent=state.code;
+  $("teamALabel").textContent=m.teamNames?.[0]||"Team A";
+  $("teamBLabel").textContent=m.teamNames?.[1]||"Team B";
+  $("scoreA").textContent=g.scores?.[0]||0;$("scoreB").textContent=g.scores?.[1]||0;
+  $("teamA").classList.toggle("active",g.turn===0&&!g.ended);$("teamB").classList.toggle("active",g.turn===1&&!g.ended);
+  $("turnBanner").textContent=g.ended?(g.scores[0]===g.scores[1]?"It's a tie!":g.scores[0]>g.scores[1]?(m.teamNames?.[0]||"Team A")+" wins!":(m.teamNames?.[1]||"Team B")+" wins!"): "Now playing: "+(m.teamNames?.[g.turn]||("Team "+(g.turn===0?"A":"B")));
+  const last=g.chain?.length?g.chain[g.chain.length-1].title:"";
+  const req=last?letters(last).last:"";
+  $("requiredLetter").textContent=req?req.toUpperCase():"—";
+  $("requiredLabel").textContent=req?"Required starting letter":"First movie";
+  $("movieInput").placeholder=req?("Start with “"+req.toUpperCase()+"”"):"e.g. Vettam";
+  $("submitMovie").textContent=g.chain?.length?"Submit Movie →":"Start Chain →";
+  $("submitMovie").disabled=!myTurn();
+  $("movieInput").disabled=!myTurn();
+  $("skipTurn").disabled=!myTurn();
+  $("undoMovie").disabled=!state.isHost||!g.chain?.length||g.ended;
+  $("endGame").disabled=!state.isHost||g.ended;
+  $("timerToggle").disabled=!state.isHost||g.ended;
+  $("timerToggle").textContent=g.timerRunning?"Pause Timer":"Start Timer";
+  $("timerLabel").textContent=(g.remaining??m.seconds)+"s";
+  $("timerFill").style.width=((g.remaining??m.seconds)/m.seconds*100)+"%";
+  $("timerFill").classList.toggle("low",(g.remaining??m.seconds)<=8);
+  $("chainCount").textContent=g.chain?.length||0;
+  $("connectionState").textContent=state.isHost?"Connected · You are host":"Connected · Team "+(playerTeam(state.uid)===0?"A":"B");
+  const players=Object.values(state.players||{});
+  $("playersList").innerHTML="";
+  if(!players.length){$("playersList").textContent="Waiting for players…";}
+  else players.forEach(p=>{const line=document.createElement("div");line.className="player-chip";line.textContent=p.name+" · "+(m.teamNames?.[p.team]||("Team "+(p.team===0?"A":"B")))+(p.uid===m.hostUid?" · Host":"");$("playersList").appendChild(line);});
+  const list=$("chainList");list.innerHTML="";
+  if(!g.chain?.length){list.innerHTML='<div class="empty-chain">🎬 No movies yet.<br>Team A can start the chain!</div>';}
+  else g.chain.forEach((item,i)=>{const row=document.createElement("div");row.className="chain-item";const n=document.createElement("span");n.className="chain-number";n.textContent=i+1;const info=document.createElement("div");const title=document.createElement("div");title.className="movie-title";title.textContent=item.title;const meta=document.createElement("div");meta.className="movie-meta";meta.textContent=(m.teamNames?.[item.team]||("Team "+(item.team===0?"A":"B")))+" · "+(item.player||"Player")+" · "+new Date(item.time||Date.now()).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});info.append(title,meta);const tag=document.createElement("span");tag.className="letter-tag";tag.textContent=letters(item.title).last.toUpperCase();row.append(n,info,tag);list.appendChild(row);});
+  if(g.message)say(g.message);else say("");
+}
+function roomPath(path=""){return "rooms/"+state.code+(path?"/"+path:"");}
+async function ensureAuth(){if(auth.currentUser)return auth.currentUser;const cred=await signInAnonymously(auth);return cred.user;}
+function makeCode(){const chars="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";const bytes=new Uint8Array(6);crypto.getRandomValues(bytes);return [...bytes].map(b=>chars[b%chars.length]).join("");}
+async function createRoom(event){event.preventDefault();try{const user=await ensureAuth();const name=norm($("playerName").value);if(!name)throw new Error("Enter your display name first.");const teamNames=[norm($("nameA").value)||"Team A",norm($("nameB").value)||"Team B"];const seconds=Number($("duration").value)||30;let code,created=false;for(let i=0;i<8;i++){code=makeCode();const existing=await get(ref(db,"rooms/"+code+"/meta"));if(!existing.exists()){created=true;break;}}if(!created)throw new Error("Could not create a room code. Please try again.");state.uid=user.uid;state.code=code;state.isHost=true;state.myTeam=0;state.meta={hostUid:user.uid,teamNames,seconds,createdAt:Date.now()};state.players={[user.uid]:{uid:user.uid,name,team:0,joinedAt:Date.now()}};state.game={scores:[0,0],chain:[],turn:0,remaining:seconds,timerRunning:false,ended:false,message:"Room created! Share the code with your friends. Team A plays first."};await set(ref(db,roomPath("meta")),state.meta);await set(ref(db,roomPath("players/"+user.uid)),state.players[user.uid]);await set(gameRef(),state.game);await enterRoom();}catch(e){console.error(e);toast(friendlyError(e));}}
+async function joinRoom(event){event.preventDefault();try{const user=await ensureAuth();const code=norm($("roomCodeInput").value).toUpperCase().replace(/[^A-Z0-9]/g,"");const name=norm($("joinName").value);const team=Number($("joinTeam").value);if(!code)throw new Error("Enter the room code.");if(!name)throw new Error("Enter your display name.");const metaSnap=await get(ref(db,"rooms/"+code+"/meta"));if(!metaSnap.exists())throw new Error("Room not found. Check the code and try again.");const meta=metaSnap.val();const gameSnap=await get(ref(db,"rooms/"+code+"/game"));if(!gameSnap.exists())throw new Error("This room is not ready yet.");state.uid=user.uid;state.code=code;state.isHost=meta.hostUid===user.uid;state.myTeam=team;state.meta=meta;const player={uid:user.uid,name,team,joinedAt:Date.now()};await set(ref(db,"rooms/"+code+"/players/"+user.uid),player);state.players={};state.game=gameSnap.val();await enterRoom();}catch(e){console.error(e);toast(friendlyError(e));}}
+function friendlyError(e){if(e?.code==="PERMISSION_DENIED"||String(e?.message||"").includes("PERMISSION_DENIED"))return "Firebase denied this action. Check the Realtime Database rules and confirm Anonymous Authentication is enabled.";if(e?.code==="auth/unauthorized-domain")return "Authorize ramihere.github.io in Firebase Authentication → Settings → Authorized domains.";if(e?.code==="auth/operation-not-allowed")return "Enable Anonymous sign-in in Firebase Authentication → Sign-in method.";return e?.message||"Something went wrong. Please try again.";}
+async function enterRoom(){showGame(true);$("movieInput").value="";$("connectionState").textContent="Connecting…";const base=roomPath();state.unsubscribers.forEach(fn=>fn());state.unsubscribers=[];state.unsubscribers.push(onValue(ref(db,base+"/meta"),snap=>{if(!snap.exists()){toast("This room no longer exists.");return;}state.meta=snap.val();render();}));state.unsubscribers.push(onValue(ref(db,base+"/players"),snap=>{state.players=snap.val()||{};render();}));state.unsubscribers.push(onValue(ref(db,base+"/game"),snap=>{state.game=snap.val();render();}));if(state.isHost)startHostServices();else state.unsubscribers.push(onValue(ref(db,base+"/meta/hostUid"),snap=>{if(!snap.exists())toast("The host is no longer available.");}));}
+function startHostServices(){const requestsRef=ref(db,roomPath("requests"));state.unsubscribers.push(onChildAdded(requestsRef,snap=>{const requestId=snap.key;const request=snap.val();if(!request||state.processed.has(requestId))return;state.processed.add(requestId);state.requestQueue=state.requestQueue.then(()=>processRequest(requestId,request)).catch(e=>{console.error(e);});}));if(state.timer)clearInterval(state.timer);state.timer=setInterval(()=>{if(state.timerBusy||!state.game?.timerRunning||state.game?.ended)return;state.timerBusy=true;state.requestQueue=state.requestQueue.then(async()=>{const snap=await get(gameRef());if(!snap.exists())return;const g=snap.val();if(!g.timerRunning||g.ended)return;g.remaining=Math.max(0,(g.remaining??state.meta.seconds)-1);if(g.remaining<=0){g.turn=1-g.turn;g.remaining=state.meta.seconds;g.message="Time is up! The turn has passed to the other team.";}await set(gameRef(),g);}).catch(console.error).finally(()=>{state.timerBusy=false;});},1000);}
+async function processRequest(requestId,request){try{const reqRef=ref(db,roomPath("requests/"+requestId));const uid=request.uid;const playersSnap=await get(ref(db,roomPath("players")));const players=playersSnap.val()||{};const player=players[uid];const meta=state.meta||(await get(ref(db,roomPath("meta")))).val();const gameSnap=await get(gameRef());if(!gameSnap.exists())return;const g=gameSnap.val();if(!player)return;
+if(request.action==="move"){if(g.ended||player.team!==g.turn){g.message="That move was not accepted: it is not your team's turn.";await set(gameRef(),g);return;}const title=norm(request.title);if(!title){g.message="Enter a movie title.";await set(gameRef(),g);return;}const key=title.toLocaleLowerCase().replace(/\s+/g," ");if((g.usedTitles||[]).includes(key)){g.message="That movie has already been used. Try another title.";await set(gameRef(),g);return;}const ch=letters(title);const last=g.chain?.length?letters(g.chain[g.chain.length-1].title).last:"";if(!ch.first||!ch.last||(last&&ch.first!==last)){g.message=last?"That title must start with “"+last.toUpperCase()+"”.":"Please enter a readable movie title.";await set(gameRef(),g);return;}g.chain=g.chain||[];g.usedTitles=g.usedTitles||[];g.chain.push({title,team:player.team,player:player.name,time:Date.now()});g.usedTitles.push(key);g.scores[player.team]++;g.turn=1-g.turn;g.remaining=meta.seconds;g.message="Accepted! The next team must start with “"+ch.last.toUpperCase()+"”.";await set(gameRef(),g);return;}
+if(request.action==="skip"){if(g.ended||player.team!==g.turn){g.message="Only the team whose turn it is can skip.";await set(gameRef(),g);return;}g.turn=1-g.turn;g.remaining=meta.seconds;g.message=player.name+" skipped the turn. No point awarded.";await set(gameRef(),g);return;}
+if(request.action==="undo"&&uid===meta.hostUid){if(g.ended||!g.chain?.length)return;const item=g.chain.pop();g.usedTitles=(g.usedTitles||[]).filter(x=>x!==item.title.toLocaleLowerCase().replace(/\s+/g," "));g.scores[item.team]=Math.max(0,g.scores[item.team]-1);g.turn=item.team;g.remaining=meta.seconds;g.message="Removed “"+item.title+"” from the chain.";await set(gameRef(),g);return;}
+if(request.action==="end"&&uid===meta.hostUid){g.ended=true;g.timerRunning=false;g.message="Game ended by the host.";await set(gameRef(),g);return;}
+if(request.action==="timer"&&uid===meta.hostUid&&!g.ended){g.timerRunning=!g.timerRunning;g.message=g.timerRunning?"The countdown timer is running.":"The countdown timer is paused.";await set(gameRef(),g);return;}
+}finally{await remove(ref(db,roomPath("requests/"+requestId)));}}
+async function sendAction(action,extra={}){if(!state.code||!state.uid)return;try{await push(ref(db,roomPath("requests")),{uid:state.uid,action,...extra,createdAt:Date.now()});}catch(e){toast(friendlyError(e));}}
+$("setupForm").addEventListener("submit",createRoom);
+$("joinRoomForm").addEventListener("submit",joinRoom);
+$("movieForm").addEventListener("submit",e=>{e.preventDefault();const title=norm($("movieInput").value);if(!title){say("Enter a movie title.",true);return;}sendAction("move",{title});$("movieInput").value="";});
+$("skipTurn").addEventListener("click",()=>sendAction("skip"));
+$("undoMovie").addEventListener("click",()=>sendAction("undo"));
+$("endGame").addEventListener("click",()=>sendAction("end"));
+$("timerToggle").addEventListener("click",()=>sendAction("timer"));
+$("copyRoom").addEventListener("click",async()=>{const link=location.origin+location.pathname+"?room="+encodeURIComponent(state.code);try{await navigator.clipboard.writeText(link);toast("Invite link copied! Room code: "+state.code);}catch{toast("Share this link: "+link+" — Room code: "+state.code);}});
+$("leaveRoom").addEventListener("click",async()=>{if(state.code&&state.uid){try{await remove(ref(db,roomPath("players/"+state.uid)));}catch(e){console.warn(e);}}if(state.timer)clearInterval(state.timer);state.unsubscribers.forEach(fn=>fn());state.unsubscribers=[];state.code=null;state.game=null;state.meta=null;state.players={};state.isHost=false;showGame(false);});
+$("helpBtn").addEventListener("click",()=>$("helpDialog").showModal());
+$("closeHelp").addEventListener("click",()=>$("helpDialog").close());
+const roomFromUrl=new URLSearchParams(location.search).get("room");if(roomFromUrl){$("roomCodeInput").value=roomFromUrl.toUpperCase();$("joinRoomForm").scrollIntoView({behavior:"smooth",block:"center"});}
+onAuthStateChanged(auth,user=>{if(user)state.uid=user.uid;});
+renderSetupDefaults();
+function renderSetupDefaults(){$("connectionState").textContent="Not connected";}
