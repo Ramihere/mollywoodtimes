@@ -32,7 +32,7 @@ function finishGame(g,meta,reason="limit"){
   const scores=g.scores||[0,0],names=meta.teamNames||["Team A","Team B"];
   const team=scores[0]===scores[1]?null:(scores[0]>scores[1]?0:1);
   const playerCounts={};
-  (g.chain||[]).forEach(item=>{if(item.player)playerCounts[item.player]=(playerCounts[item.player]||0)+1;});
+  (g.chain||[]).forEach(item=>{if(item.player&&(team===null||item.team===team))playerCounts[item.player]=(playerCounts[item.player]||0)+1;});
   const top=Object.entries(playerCounts).sort((a,b)=>b[1]-a[1])[0]||null;
   g.winner={team,teamName:team===null?null:names[team],topPlayer:top?top[0]:null,topPlayerMovies:top?top[1]:0,scores:[scores[0]||0,scores[1]||0],movieCount:(g.chain||[]).length};
   g.message=team===null?"Game finished in a tie!":names[team]+" wins the game!";
