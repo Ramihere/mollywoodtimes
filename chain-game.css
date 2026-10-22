@@ -122,3 +122,27 @@ main{max-width:1180px;padding:12px 24px 42px}
   #setup .setup-stack label{margin:9px 0 5px}
   #setup .setup-stack input,#setup .setup-stack .movie-input{min-height:43px;padding:10px 12px}
 }
+
+/* Match goal and animated winner reveal */
+#customMovieLimitWrap{display:flex;flex-direction:column;gap:8px}#customMovieLimitWrap.hidden{display:none}
+.chain-progress-head{align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.progress-label{font-size:.78rem;color:var(--mint);font-weight:700}
+.goal-track{height:8px;background:#302a45;border:1px solid #3b3454;border-radius:999px;overflow:hidden;margin:-2px 0 16px}
+.goal-fill{height:100%;width:0;background:linear-gradient(90deg,#ff679d,#ff9b80);border-radius:999px;transition:width .45s ease}
+.winner-overlay{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:20px;background:rgba(10,8,20,.82);backdrop-filter:blur(9px);overflow:hidden;animation:winnerFade .45s ease both}
+.winner-overlay.hidden{display:none}
+.winner-card{position:relative;z-index:2;width:min(100%,440px);text-align:center;padding:32px 26px 26px;border:1px solid #645077;border-radius:26px;background:linear-gradient(145deg,#28203f,#171327 72%);box-shadow:0 25px 100px #0008;animation:winnerPop .6s cubic-bezier(.2,.85,.25,1.2) both}
+.winner-cup{font-size:3.7rem;line-height:1.2;filter:drop-shadow(0 8px 20px #ffb65b55);animation:cupBob 2s ease-in-out infinite}
+.winner-card .eyebrow{margin:14px 0 8px;color:#ffb46e;font-size:.72rem;letter-spacing:.13em;font-weight:800}
+.winner-card h2{font-size:clamp(1.8rem,6vw,2.4rem);line-height:1.1;margin:0 0 12px}
+.winner-team{font-size:1.35rem;font-weight:800;color:#ff76a6;margin:0 0 8px}
+.winner-player{color:#c9c1df;margin:0 0 12px}
+.winner-score{display:inline-block;padding:9px 14px;margin:0 0 18px;background:#211b35;border:1px solid #403755;border-radius:12px;font-weight:800}
+.confetti{position:absolute;z-index:1;top:-12%;width:10px;height:18px;border-radius:3px;opacity:.9;animation:confettiFall 3.6s linear infinite}
+.confetti-one{left:25%;background:#ff6b9e;box-shadow:55px 80px #ffc46b,110px 30px #a58bff,170px 110px #72e7c2,230px 40px #ff927f,300px 130px #ff6b9e}
+.confetti-two{left:65%;background:#ffc46b;box-shadow:-55px 80px #72e7c2,-110px 30px #ff6b9e,-170px 110px #a58bff,-230px 40px #ff927f,-300px 130px #ffc46b;animation-delay:-1.7s}
+@keyframes winnerFade{from{opacity:0}to{opacity:1}}
+@keyframes winnerPop{from{opacity:0;transform:translateY(18px) scale(.9)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes cupBob{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-7px) rotate(4deg)}}
+@keyframes confettiFall{0%{transform:translateY(-5vh) rotate(0deg)}100%{transform:translateY(115vh) rotate(600deg)}}
+@media(prefers-reduced-motion:reduce){.winner-overlay,.winner-card,.winner-cup,.confetti,.goal-fill{animation:none!important;transition:none!important}}
