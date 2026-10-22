@@ -86,3 +86,39 @@ main{max-width:1180px;padding:12px 24px 42px}
   #setup.hero h1{font-size:2.15rem;line-height:1.1;margin:10px 0}
   #setup.hero p{font-size:.88rem;line-height:1.6}
 }
+
+
+/* Restored cinematic split hero + interactive Create/Join tabs */
+@media(min-width:761px){
+  main{max-width:1220px;padding:14px 22px 28px}
+  .topbar{max-width:1220px;padding:16px 22px}
+  #setup.hero{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(390px,.95fr);align-items:center;gap:clamp(28px,4vw,54px);padding:clamp(28px,3.2vw,44px);min-height:620px}
+  #setup.hero>div:first-child{position:static;padding:0}
+  #setup.hero h1{font-size:clamp(2.6rem,4vw,3.8rem);line-height:1.12;margin:18px 0}
+  #setup.hero p{font-size:1rem;line-height:1.8;max-width:36rem}
+  #setup .feature-pills{margin-top:24px}
+  #setup .feature-pills span{padding:9px 13px;font-size:.8rem}
+  #setup .setup-stack{display:flex;flex-direction:column;gap:18px;padding:24px;background:rgba(17,15,31,.78);border:1px solid #393451;border-radius:24px;box-shadow:0 18px 48px #05030d30}
+  #setup .room-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:5px;background:#100e1d;border:1px solid #302a45;border-radius:14px}
+  #setup .room-tab{border:1px solid transparent;border-radius:10px;padding:12px 10px;color:#b7b1cf;background:transparent;font-weight:700;transition:background .18s,color .18s,transform .18s}
+  #setup .room-tab:hover{color:#fff;background:#25203a}
+  #setup .room-tab.active{background:linear-gradient(110deg,#ff6b9e,#ff987f);color:#25152a;box-shadow:0 5px 18px #ff6b9e22}
+  #setup .setup-stack form{background:transparent;border:0;border-radius:0;padding:0}
+  #setup .setup-stack label{margin:10px 0 6px;font-size:.82rem}
+  #setup .setup-stack input,#setup .setup-stack .movie-input{min-height:44px;padding:11px 13px;border-radius:11px}
+  #setup .setup-stack .wide{margin-top:16px;padding:13px 16px}
+  #setup .form-title{font-size:1.25rem;margin:0 0 12px}
+  #setup .setup-stack .help{margin-top:10px}
+}
+@media(max-width:760px){
+  #setup.hero{display:flex;flex-direction:column;gap:20px;padding:22px 17px}
+  #setup.hero>div:first-child{position:static}
+  #setup.hero h1{font-size:clamp(2.25rem,8vw,3rem);line-height:1.1}
+  #setup .setup-stack{display:flex;flex-direction:column;gap:16px;padding:17px;background:rgba(17,15,31,.78);border:1px solid #393451;border-radius:20px;width:100%}
+  #setup .room-tabs{display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:4px;background:#100e1d;border:1px solid #302a45;border-radius:12px}
+  #setup .room-tab{border:1px solid transparent;border-radius:9px;padding:11px 7px;color:#b7b1cf;background:transparent;font-weight:700;font-size:.84rem}
+  #setup .room-tab.active{background:linear-gradient(110deg,#ff6b9e,#ff987f);color:#25152a}
+  #setup .setup-stack form{background:transparent;border:0;padding:0}
+  #setup .setup-stack label{margin:9px 0 5px}
+  #setup .setup-stack input,#setup .setup-stack .movie-input{min-height:43px;padding:10px 12px}
+}
