@@ -89,6 +89,9 @@ if(request.action==="end"&&uid===meta.hostUid){g.ended=true;g.timerRunning=false
 if(request.action==="timer"&&uid===meta.hostUid&&!g.ended){g.timerRunning=!g.timerRunning;g.message=g.timerRunning?"The countdown timer is running.":"The countdown timer is paused.";await set(gameRef(),g);return;}
 }finally{await remove(ref(db,roomPath("requests/"+requestId)));}}
 async function sendAction(action,extra={}){if(!state.code||!state.uid)return;try{await push(ref(db,roomPath("requests")),{uid:state.uid,action,...extra,createdAt:Date.now()});}catch(e){toast(friendlyError(e));}}
+$("createTab").addEventListener("click",()=>setRoomTab("create"));
+$("joinTab").addEventListener("click",()=>setRoomTab("join"));
+function setRoomTab(which){const create=which==="create";$("setupForm").classList.toggle("hidden",!create);$("joinRoomForm").classList.toggle("hidden",create);$("createTab").classList.toggle("active",create);$("joinTab").classList.toggle("active",!create);$("createTab").setAttribute("aria-selected",String(create));$("joinTab").setAttribute("aria-selected",String(!create));}
 $("setupForm").addEventListener("submit",createRoom);
 $("joinRoomForm").addEventListener("submit",joinRoom);
 $("movieForm").addEventListener("submit",e=>{e.preventDefault();const title=norm($("movieInput").value);if(!title){say("Enter a movie title.",true);return;}sendAction("move",{title});$("movieInput").value="";});
@@ -101,7 +104,7 @@ $("copyRoom").addEventListener("click",async()=>{const link=location.origin+loca
 $("leaveRoom").addEventListener("click",async()=>{if(state.code&&state.uid){try{await remove(ref(db,roomPath("players/"+state.uid)));}catch(e){console.warn(e);}}if(state.timer)clearInterval(state.timer);state.unsubscribers.forEach(fn=>fn());state.unsubscribers=[];state.code=null;state.game=null;state.meta=null;state.players={};state.isHost=false;showGame(false);});
 $("helpBtn").addEventListener("click",()=>$("helpDialog").showModal());
 $("closeHelp").addEventListener("click",()=>$("helpDialog").close());
-const roomFromUrl=new URLSearchParams(location.search).get("room");if(roomFromUrl){$("roomCodeInput").value=roomFromUrl.toUpperCase();$("joinRoomForm").scrollIntoView({behavior:"smooth",block:"center"});}
+const roomFromUrl=new URLSearchParams(location.search).get("room");if(roomFromUrl){$("roomCodeInput").value=roomFromUrl.toUpperCase();setRoomTab("join");}
 onAuthStateChanged(auth,user=>{if(user)state.uid=user.uid;});
 renderSetupDefaults();
 function renderSetupDefaults(){$("connectionState").textContent="Not connected";$("matchFormat").addEventListener("change",()=>{$("customSizeWrap").classList.toggle("hidden",$("matchFormat").value!=="custom");});}
