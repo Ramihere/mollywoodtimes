@@ -228,3 +228,18 @@ main{max-width:1180px;padding:12px 24px 42px}
  #setup .join-perks{margin-top:14px}
 }
 @media(prefers-reduced-motion:reduce){#setup .character-card,#setup .cinema-sparkle{animation:none!important;transition:none!important}}
+
+
+/* Use one complete character illustration instead of stretching a sprite into thin strips */
+#setup .cinema-banner{display:flex;flex-direction:column;align-items:center;gap:14px;min-height:0;padding:24px 24px 8px}
+#setup .cast-artwork{width:min(100%,780px);margin:0 auto;overflow:hidden;border-radius:18px;line-height:0;position:relative;isolation:isolate;box-shadow:0 14px 38px #05030c88,0 0 28px #ff6b9e18;animation:castReveal .9s cubic-bezier(.2,.8,.2,1) both}
+#setup .cast-artwork:after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,transparent 68%,#1b153044 100%);box-shadow:inset 0 0 0 1px #ffffff20;border-radius:inherit}
+#setup .cast-artwork img{display:block;width:100%;height:auto;aspect-ratio:3/2;object-fit:cover;transition:transform .65s cubic-bezier(.2,.8,.2,1),filter .4s}
+#setup .cast-artwork:hover img{transform:scale(1.025);filter:saturate(1.08)}
+#setup .cinema-title{width:100%;order:2}
+#setup .character-cluster{display:none!important}
+#setup .cinema-title h1{font-size:clamp(2.2rem,4.2vw,3.6rem);margin:8px 0 10px}
+#setup .cinema-title .eyebrow{display:block}
+@keyframes castReveal{from{opacity:0;transform:translateY(12px) scale(.985);filter:blur(3px)}to{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}}
+@media(max-width:600px){#setup .cinema-banner{padding:16px 12px 4px;gap:12px}#setup .cast-artwork{width:100%;border-radius:12px}#setup .cinema-title h1{font-size:clamp(2rem,9vw,2.8rem)}}
+@media(prefers-reduced-motion:reduce){#setup .cast-artwork{animation:none!important}#setup .cast-artwork img{transition:none!important}}
