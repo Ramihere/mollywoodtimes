@@ -307,7 +307,7 @@ main{max-width:1180px;padding:12px 24px 42px}
     align-items:center;gap:28px;width:100%;padding:6px 28px 12px
   }
   #setup .cast-artwork{width:100%;max-width:520px;justify-self:center}
-  #setup .cast-artwork img{width:100%;aspect-ratio:3/2;max-height:245px;object-fit:cover}
+  #setup .cast-artwork img{display:block;width:100%;height:auto;aspect-ratio:auto;max-height:none;object-fit:contain}
   #setup .cinema-title{width:100%;text-align:left}
   #setup .cinema-title h1{font-size:clamp(3rem,4.5vw,4.6rem);line-height:.98;letter-spacing:-.045em;margin:12px 0 16px}
   #setup .cinema-title .eyebrow{font-size:.82rem}
@@ -339,7 +339,7 @@ main{max-width:1180px;padding:12px 24px 42px}
   main{padding-top:4px;padding-bottom:8px}
   #setup.hero,#setup.cinematic-lobby{min-height:calc(100vh - 72px);padding-top:12px;padding-bottom:14px}
   #setup .cinema-banner{padding-top:0;padding-bottom:8px;gap:22px}
-  #setup .cast-artwork img{max-height:180px}
+  #setup .cast-artwork img{max-height:none;height:auto;aspect-ratio:auto;object-fit:contain}
   #setup .cinema-title h1{font-size:clamp(2.6rem,4vw,3.7rem);margin:8px 0 10px}
   #setup .cinema-intro{padding-bottom:10px}
   #setup .setup-stack{gap:16px}
