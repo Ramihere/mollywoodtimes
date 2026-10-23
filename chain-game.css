@@ -348,3 +348,78 @@ main{max-width:1180px;padding:12px 24px 42px}
   #setup .room-card input,#setup .room-card select{min-height:35px;padding:7px 10px}
   #setup .room-card .wide{min-height:37px;margin-top:9px}
 }
+
+
+/* Clean animated cinematic lobby: no banner artwork, both room forms up front */
+body{position:relative;isolation:isolate;background:#100d1d}
+body:before,body:after{content:"";position:fixed;inset:-18%;z-index:-1;pointer-events:none}
+body:before{
+ background:
+ radial-gradient(ellipse at 15% 25%,#8c3d7b33 0,transparent 32%),
+ radial-gradient(ellipse at 82% 20%,#5548b933 0,transparent 30%),
+ radial-gradient(ellipse at 65% 88%,#e75f8b1c 0,transparent 35%);
+ filter:blur(18px);animation:lobbyAurora 18s ease-in-out infinite alternate
+}
+body:after{
+ opacity:.18;background-image:radial-gradient(#fff 1px,transparent 1.5px);
+ background-size:58px 58px;mask-image:linear-gradient(to bottom,#000,transparent 90%);
+ animation:lobbyStars 38s linear infinite
+}
+@keyframes lobbyAurora{0%{transform:translate3d(-2%,0,0) scale(1)}50%{transform:translate3d(2%,1%,0) scale(1.04)}100%{transform:translate3d(0,-2%,0) scale(1.08)}}
+@keyframes lobbyStars{from{background-position:0 0}to{background-position:116px 232px}}
+#setup.cinematic-lobby{position:relative;overflow:hidden;background:linear-gradient(135deg,#211831f2,#171329f5 60%,#20152ef2)}
+#setup.cinematic-lobby:before{content:"✦";position:absolute;right:7%;top:7%;font-size:2rem;color:#ffbd6966;animation:lobbyTwinkle 3.5s ease-in-out infinite}
+#setup.cinematic-lobby:after{content:"";position:absolute;left:4%;top:12%;width:110px;height:110px;border:1px solid #ff6b9e1a;border-radius:28px;transform:rotate(25deg);animation:lobbyFloat 9s ease-in-out infinite;pointer-events:none}
+@keyframes lobbyTwinkle{0%,100%{opacity:.25;transform:scale(.8) rotate(0)}50%{opacity:1;transform:scale(1.2) rotate(18deg)}}
+@keyframes lobbyFloat{0%,100%{transform:translateY(0) rotate(25deg)}50%{transform:translateY(-16px) rotate(40deg)}}
+#setup .cinema-banner{display:block;min-height:0;padding:8px 20px 2px;text-align:center}
+#setup .cinema-title{width:100%;order:0;text-align:center;animation:lobbyIntro .75s ease-out both}
+#setup .cinema-title h1{font-size:clamp(2.7rem,5vw,4.7rem);line-height:.98;letter-spacing:-.055em;margin:12px 0}
+#setup .cinema-subtitle{font-size:.8rem;letter-spacing:.24em}
+#setup .cinema-sparkle{margin-top:9px;animation:lobbyTwinkle 3s ease-in-out infinite}
+#setup .cinema-intro{text-align:center;padding:5px 22px 14px}
+#setup .cinema-intro>p{margin:0 auto;max-width:900px}
+#setup .feature-pills{justify-content:center}
+#setup .setup-stack{position:relative;z-index:1}
+#setup .room-card{background:linear-gradient(145deg,#19152cf2,#141123f5);box-shadow:0 12px 32px #05030d20;transition:transform .2s,border-color .2s,box-shadow .2s}
+#setup .room-card:hover{transform:translateY(-3px);border-color:#695079;box-shadow:0 16px 36px #05030d3b}
+#setup .room-icon{display:grid;place-items:center}
+#setup .room-card-heading{display:flex;align-items:center;gap:12px}
+#setup .room-card-heading p{margin:0;color:var(--muted);font-size:.8rem}
+#setup .setup-stack input:focus,#setup .setup-stack select:focus{box-shadow:0 0 0 3px #ff6b9e20;border-color:var(--pink)}
+@keyframes lobbyIntro{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@media(min-width:761px){
+ #setup.cinematic-lobby{min-height:calc(100vh - 88px);padding:18px 26px 22px;gap:0}
+ #setup .cinema-banner{padding:5px 20px 0}
+ #setup .cinema-title h1{font-size:clamp(2.8rem,4vw,4rem);margin:8px 0 10px}
+ #setup .cinema-subtitle{font-size:.76rem}
+ #setup .cinema-sparkle{font-size:1rem;margin-top:7px}
+ #setup .cinema-intro{padding:2px 20px 12px}
+ #setup .cinema-intro>p{font-size:.88rem;line-height:1.45}
+ #setup .feature-pills{margin-top:9px;gap:7px}
+ #setup .feature-pills span{font-size:.7rem;padding:6px 10px}
+ #setup .setup-stack{gap:18px;padding:0 12px 4px}
+ #setup .room-card{padding:14px 20px}
+ #setup .room-card-heading{margin-bottom:4px}
+ #setup .room-icon{width:36px;height:36px;flex-basis:36px;font-size:1.1rem}
+ #setup .form-title{font-size:1.08rem;margin:0 0 2px}
+ #setup .room-card-heading p{font-size:.72rem}
+ #setup .room-card label{margin:6px 0 4px;font-size:.76rem}
+ #setup .room-card input,#setup .room-card select{min-height:35px;padding:7px 10px;font-size:.82rem}
+ #setup .room-card .wide{min-height:37px;margin-top:8px;padding:8px 12px;font-size:.84rem}
+ #setup .join-perks{margin-top:9px;gap:6px}
+ #setup .join-perks span{padding:6px;font-size:.64rem}
+ #setup .room-card .help{font-size:.68rem;margin-top:6px}
+}
+@media(max-width:760px){
+ #setup .cinema-banner{padding:8px 8px 0}
+ #setup .cinema-title h1{font-size:clamp(2.35rem,10vw,3.5rem)}
+ #setup .cinema-subtitle{font-size:.64rem;letter-spacing:.14em}
+ #setup .cinema-intro{padding:6px 4px 12px}
+ #setup .setup-stack{display:flex;flex-direction:column;gap:14px;padding:0}
+ #setup .room-card{padding:16px}
+}
+@media(prefers-reduced-motion:reduce){
+ body:before,body:after,#setup.cinematic-lobby:before,#setup.cinematic-lobby:after,#setup .cinema-title,#setup .cinema-sparkle{animation:none!important}
+ #setup .room-card{transition:none!important}
+}
