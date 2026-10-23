@@ -291,3 +291,60 @@ main{max-width:1180px;padding:12px 24px 42px}
   #setup .room-card .wide{min-height:31px;margin-top:7px}
   #setup .join-perks{margin-top:6px}
 }
+
+
+/* Full-width desktop lobby: use the available screen instead of leaving empty gutters */
+@media(min-width:761px){
+  .topbar{max-width:1580px;width:100%;padding:12px 34px}
+  main{max-width:1580px;width:100%;padding:8px 28px 18px}
+  #setup.hero,#setup.cinematic-lobby{
+    display:flex;flex-direction:column;align-items:stretch;gap:0;
+    width:100%;min-height:calc(100vh - 86px);padding:18px 26px 22px;
+    border-radius:26px
+  }
+  #setup .cinema-banner{
+    display:grid;grid-template-columns:minmax(360px,.82fr) minmax(0,1.18fr);
+    align-items:center;gap:28px;width:100%;padding:6px 28px 12px
+  }
+  #setup .cast-artwork{width:100%;max-width:520px;justify-self:center}
+  #setup .cast-artwork img{width:100%;aspect-ratio:3/2;max-height:245px;object-fit:cover}
+  #setup .cinema-title{width:100%;text-align:left}
+  #setup .cinema-title h1{font-size:clamp(3rem,4.5vw,4.6rem);line-height:.98;letter-spacing:-.045em;margin:12px 0 16px}
+  #setup .cinema-title .eyebrow{font-size:.82rem}
+  #setup .cinema-subtitle{font-size:.88rem;letter-spacing:.22em}
+  #setup .cinema-sparkle{font-size:1.2rem;margin-top:12px}
+  #setup .cinema-intro{width:100%;padding:0 24px 16px}
+  #setup .cinema-intro>p{max-width:none;font-size:.95rem;line-height:1.55}
+  #setup .feature-pills{margin-top:12px;gap:9px}
+  #setup .feature-pills span{font-size:.78rem;padding:8px 13px}
+  #setup .setup-stack{
+    display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    align-items:stretch;gap:22px;width:100%;padding:0 20px 8px;
+    background:transparent;border:0;border-radius:0
+  }
+  #setup .room-card{height:100%;padding:20px 24px;border-radius:18px}
+  #setup .room-card-heading{gap:12px;margin-bottom:8px}
+  #setup .room-icon{width:42px;height:42px;flex-basis:42px;font-size:1.25rem}
+  #setup .form-title{font-size:1.25rem;margin:0 0 5px}
+  #setup .room-card-heading p{font-size:.82rem}
+  #setup .room-card label{font-size:.82rem;margin:9px 0 5px}
+  #setup .room-card input,#setup .room-card select{min-height:41px;padding:9px 12px;font-size:.9rem;border-radius:10px}
+  #setup .room-card .wide{min-height:43px;margin-top:12px;padding:10px 14px;font-size:.9rem}
+  #setup .join-perks{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:13px}
+  #setup .join-perks span{padding:8px;font-size:.72rem}
+  #setup .room-card .help{font-size:.74rem;margin-top:8px}
+}
+@media(min-width:761px) and (max-height:800px){
+  .topbar{padding-top:6px;padding-bottom:6px}
+  main{padding-top:4px;padding-bottom:8px}
+  #setup.hero,#setup.cinematic-lobby{min-height:calc(100vh - 72px);padding-top:12px;padding-bottom:14px}
+  #setup .cinema-banner{padding-top:0;padding-bottom:8px;gap:22px}
+  #setup .cast-artwork img{max-height:180px}
+  #setup .cinema-title h1{font-size:clamp(2.6rem,4vw,3.7rem);margin:8px 0 10px}
+  #setup .cinema-intro{padding-bottom:10px}
+  #setup .setup-stack{gap:16px}
+  #setup .room-card{padding:14px 20px}
+  #setup .room-card label{margin:6px 0 4px}
+  #setup .room-card input,#setup .room-card select{min-height:35px;padding:7px 10px}
+  #setup .room-card .wide{min-height:37px;margin-top:9px}
+}
